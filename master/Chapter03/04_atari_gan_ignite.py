@@ -179,9 +179,11 @@ def iterate_batches(envs, batch_size=BATCH_SIZE):
             e.reset()
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=True, action="store_true", help="Enable cuda computation")
+    parser.add_argument(
+        "--cuda", default=False, action="store_true", help="Enable cuda computation"
+    )
     args = parser.parse_args()
 
     device = torch.device("cuda" if args.cuda else "cpu")
@@ -250,3 +252,7 @@ if __name__ == "__main__":
             )
 
     engine.run(data=iterate_batches(envs))
+
+
+if __name__ == "__main__":
+    main()
