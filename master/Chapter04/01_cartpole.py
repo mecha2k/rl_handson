@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import gym
 from collections import namedtuple
 import numpy as np
@@ -14,21 +13,19 @@ BATCH_SIZE = 16
 PERCENTILE = 70
 
 
-class Net(nn.Module):
+class Network(nn.Module):
     def __init__(self, obs_size, hidden_size, n_actions):
-        super(Net, self).__init__()
+        super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(obs_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, n_actions)
+            nn.Linear(obs_size, hidden_size), nn.ReLU(), nn.Linear(hidden_size, n_actions)
         )
 
     def forward(self, x):
         return self.net(x)
 
 
-Episode = namedtuple('Episode', field_names=['reward', 'steps'])
-EpisodeStep = namedtuple('EpisodeStep', field_names=['observation', 'action'])
+Episode = namedtuple("Episode", field_names=["reward", "steps"])
+EpisodeStep = namedtuple("EpisodeStep", field_names=["observation", "action"])
 
 
 def iterate_batches(env, net, batch_size):
@@ -82,22 +79,22 @@ if __name__ == "__main__":
     obs_size = env.observation_space.shape[0]
     n_actions = env.action_space.n
 
-    net = Net(obs_size, HIDDEN_SIZE, n_actions)
+    net = Network(obs_size, HIDDEN_SIZE, n_actions)
     objective = nn.CrossEntropyLoss()
     optimizer = optim.Adam(params=net.parameters(), lr=0.01)
     writer = SummaryWriter(comment="-cartpole")
 
-    for iter_no, batch in enumerate(iterate_batches(
-            env, net, BATCH_SIZE)):
-        obs_v, acts_v, reward_b, reward_m = \
-            filter_batch(batch, PERCENTILE)
+    for iter_no, batch in enumerate(iterate_batches(env, net, BATCH_SIZE)):
+        obs_v, acts_v, reward_b, reward_m = filter_batch(batch, PERCENTILE)
         optimizer.zero_grad()
         action_scores_v = net(obs_v)
         loss_v = objective(action_scores_v, acts_v)
         loss_v.backward()
         optimizer.step()
-        print("%d: loss=%.3f, reward_mean=%.1f, rw_bound=%.1f" % (
-            iter_no, loss_v.item(), reward_m, reward_b))
+        print(
+            "%d: loss=%.3f, reward_mean=%.1f, rw_bound=%.1f"
+            % (iter_no, loss_v.item(), reward_m, reward_b)
+        )
         writer.add_scalar("loss", loss_v.item(), iter_no)
         writer.add_scalar("reward_bound", reward_b, iter_no)
         writer.add_scalar("reward_mean", reward_m, iter_no)
