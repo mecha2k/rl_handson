@@ -1,10 +1,10 @@
-import random
+import numpy as np
 import gym
 import gym.spaces
 import gym.wrappers
 import gym.envs.toy_text.frozen_lake
+
 from collections import namedtuple
-import numpy as np
 from tensorboardX import SummaryWriter
 
 import torch
@@ -89,7 +89,7 @@ def filter_batch(batch, percentile):
 
 
 def main():
-    random.seed(12345)
+    np.random.seed(42)
     env = gym.envs.toy_text.frozen_lake.FrozenLakeEnv(is_slippery=False)
     env.spec = gym.spec("FrozenLake-v0")
     env = gym.wrappers.TimeLimit(env, max_episode_steps=100)
