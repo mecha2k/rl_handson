@@ -63,7 +63,7 @@ class Agent:
 
 def main():
     env_name = "FrozenLake-v0"
-    # or "FrozenLake8x8-v0"
+    # "FrozenLake-v0" or "FrozenLake8x8-v0"
 
     test_env = gym.make(env_name)
     agent = Agent(env_name=env_name)
