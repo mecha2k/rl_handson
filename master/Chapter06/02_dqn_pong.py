@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from lib import wrappers
 from lib import dqn_model
 
@@ -30,8 +29,8 @@ EPSILON_FINAL = 0.01
 
 
 Experience = collections.namedtuple(
-    'Experience', field_names=['state', 'action', 'reward',
-                               'done', 'new_state'])
+    "Experience", field_names=["state", "action", "reward", "done", "new_state"]
+)
 
 
 class ExperienceBuffer:
@@ -45,14 +44,15 @@ class ExperienceBuffer:
         self.buffer.append(experience)
 
     def sample(self, batch_size):
-        indices = np.random.choice(len(self.buffer), batch_size,
-                                   replace=False)
-        states, actions, rewards, dones, next_states = \
-            zip(*[self.buffer[idx] for idx in indices])
-        return np.array(states), np.array(actions), \
-               np.array(rewards, dtype=np.float32), \
-               np.array(dones, dtype=np.uint8), \
-               np.array(next_states)
+        indices = np.random.choice(len(self.buffer), batch_size, replace=False)
+        states, actions, rewards, dones, next_states = zip(*[self.buffer[idx] for idx in indices])
+        return (
+            np.array(states),
+            np.array(actions),
+            np.array(rewards, dtype=np.float32),
+            np.array(dones, dtype=np.uint8),
+            np.array(next_states),
+        )
 
 
 class Agent:
@@ -62,7 +62,7 @@ class Agent:
         self._reset()
 
     def _reset(self):
-        self.state = env.reset()
+        self.state = self.env.reset()
         self.total_reward = 0.0
 
     @torch.no_grad()
@@ -82,8 +82,7 @@ class Agent:
         new_state, reward, is_done, _ = self.env.step(action)
         self.total_reward += reward
 
-        exp = Experience(self.state, action, reward,
-                         is_done, new_state)
+        exp = Experience(self.state, action, reward, is_done, new_state)
         self.exp_buffer.append(exp)
         self.state = new_state
         if is_done:
@@ -95,43 +94,37 @@ class Agent:
 def calc_loss(batch, net, tgt_net, device="cpu"):
     states, actions, rewards, dones, next_states = batch
 
-    states_v = torch.tensor(np.array(
-        states, copy=False)).to(device)
-    next_states_v = torch.tensor(np.array(
-        next_states, copy=False)).to(device)
+    states_v = torch.tensor(np.array(states, copy=False)).to(device)
+    next_states_v = torch.tensor(np.array(next_states, copy=False)).to(device)
     actions_v = torch.tensor(actions).to(device)
     rewards_v = torch.tensor(rewards).to(device)
     done_mask = torch.BoolTensor(dones).to(device)
 
-    state_action_values = net(states_v).gather(
-        1, actions_v.unsqueeze(-1)).squeeze(-1)
+    state_action_values = net(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
     with torch.no_grad():
         next_state_values = tgt_net(next_states_v).max(1)[0]
         next_state_values[done_mask] = 0.0
         next_state_values = next_state_values.detach()
 
-    expected_state_action_values = next_state_values * GAMMA + \
-                                   rewards_v
-    return nn.MSELoss()(state_action_values,
-                        expected_state_action_values)
+    expected_state_action_values = next_state_values * GAMMA + rewards_v
+    return nn.MSELoss()(state_action_values, expected_state_action_values)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False,
-                        action="store_true", help="Enable cuda")
-    parser.add_argument("--env", default=DEFAULT_ENV_NAME,
-                        help="Name of the environment, default=" +
-                             DEFAULT_ENV_NAME)
+    parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
+    parser.add_argument(
+        "--env",
+        default=DEFAULT_ENV_NAME,
+        help="Name of the environment, default=" + DEFAULT_ENV_NAME,
+    )
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
 
     env = wrappers.make_env(args.env)
 
-    net = dqn_model.DQN(env.observation_space.shape,
-                        env.action_space.n).to(device)
-    tgt_net = dqn_model.DQN(env.observation_space.shape,
-                            env.action_space.n).to(device)
+    net = dqn_model.DQN(env.observation_space.shape, env.action_space.n).to(device)
+    tgt_net = dqn_model.DQN(env.observation_space.shape, env.action_space.n).to(device)
     writer = SummaryWriter(comment="-" + args.env)
     print(net)
 
@@ -148,8 +141,7 @@ if __name__ == "__main__":
 
     while True:
         frame_idx += 1
-        epsilon = max(EPSILON_FINAL, EPSILON_START -
-                      frame_idx / EPSILON_DECAY_LAST_FRAME)
+        epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
 
         reward = agent.play_step(net, epsilon, device=device)
         if reward is not None:
@@ -158,21 +150,19 @@ if __name__ == "__main__":
             ts_frame = frame_idx
             ts = time.time()
             m_reward = np.mean(total_rewards[-100:])
-            print("%d: done %d games, reward %.3f, "
-                  "eps %.2f, speed %.2f f/s" % (
-                frame_idx, len(total_rewards), m_reward, epsilon,
-                speed
-            ))
+            print(
+                "%d: done %d games, reward %.3f, "
+                "eps %.2f, speed %.2f f/s"
+                % (frame_idx, len(total_rewards), m_reward, epsilon, speed)
+            )
             writer.add_scalar("epsilon", epsilon, frame_idx)
             writer.add_scalar("speed", speed, frame_idx)
             writer.add_scalar("reward_100", m_reward, frame_idx)
             writer.add_scalar("reward", reward, frame_idx)
             if best_m_reward is None or best_m_reward < m_reward:
-                torch.save(net.state_dict(), args.env +
-                           "-best_%.0f.dat" % m_reward)
+                torch.save(net.state_dict(), args.env + "-best_%.0f.dat" % m_reward)
                 if best_m_reward is not None:
-                    print("Best reward updated %.3f -> %.3f" % (
-                        best_m_reward, m_reward))
+                    print("Best reward updated %.3f -> %.3f" % (best_m_reward, m_reward))
                 best_m_reward = m_reward
             if m_reward > MEAN_REWARD_BOUND:
                 print("Solved in %d frames!" % frame_idx)
@@ -190,3 +180,7 @@ if __name__ == "__main__":
         loss_t.backward()
         optimizer.step()
     writer.close()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import random
 import gym
 import gym.spaces
@@ -10,7 +9,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-
 HIDDEN_SIZE = 128
 BATCH_SIZE = 100
 PERCENTILE = 30
@@ -21,7 +19,9 @@ class DiscreteOneHotWrapper(gym.ObservationWrapper):
     def __init__(self, env):
         super(DiscreteOneHotWrapper, self).__init__(env)
         assert isinstance(env.observation_space, gym.spaces.Discrete)
-        self.observation_space = gym.spaces.Box(0.0, 1.0, (env.observation_space.n, ), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(
+            0.0, 1.0, (env.observation_space.n,), dtype=np.float32
+        )
 
     def observation(self, observation):
         res = np.copy(self.observation_space.low)
@@ -33,17 +33,15 @@ class Net(nn.Module):
     def __init__(self, obs_size, hidden_size, n_actions):
         super(Net, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(obs_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, n_actions)
+            nn.Linear(obs_size, hidden_size), nn.ReLU(), nn.Linear(hidden_size, n_actions)
         )
 
     def forward(self, x):
         return self.net(x)
 
 
-Episode = namedtuple('Episode', field_names=['reward', 'steps'])
-EpisodeStep = namedtuple('EpisodeStep', field_names=['observation', 'action'])
+Episode = namedtuple("Episode", field_names=["reward", "steps"])
+EpisodeStep = namedtuple("EpisodeStep", field_names=["observation", "action"])
 
 
 def iterate_batches(env, net, batch_size):
@@ -81,19 +79,17 @@ def filter_batch(batch, percentile):
     elite_batch = []
     for example, discounted_reward in zip(batch, disc_rewards):
         if discounted_reward > reward_bound:
-            train_obs.extend(map(lambda step: step.observation,
-                                 example.steps))
-            train_act.extend(map(lambda step: step.action,
-                                 example.steps))
+            train_obs.extend(map(lambda step: step.observation, example.steps))
+            train_act.extend(map(lambda step: step.action, example.steps))
             elite_batch.append(example)
 
     return elite_batch, train_obs, train_act, reward_bound
 
 
-if __name__ == "__main__":
+def main():
     random.seed(12345)
     env = DiscreteOneHotWrapper(gym.make("FrozenLake-v0"))
-    # env = gym.wrappers.Monitor(env, directory="mon", force=True)
+    env = gym.wrappers.Monitor(env, directory="mon", force=True)
     obs_size = env.observation_space.shape[0]
     n_actions = env.action_space.n
 
@@ -103,12 +99,9 @@ if __name__ == "__main__":
     writer = SummaryWriter(comment="-frozenlake-tweaked")
 
     full_batch = []
-    for iter_no, batch in enumerate(iterate_batches(
-            env, net, BATCH_SIZE)):
-        reward_mean = float(np.mean(list(map(
-            lambda s: s.reward, batch))))
-        full_batch, obs, acts, reward_bound = \
-            filter_batch(full_batch + batch, PERCENTILE)
+    for iter_no, batch in enumerate(iterate_batches(env, net, BATCH_SIZE)):
+        reward_mean = float(np.mean(list(map(lambda s: s.reward, batch))))
+        full_batch, obs, acts, reward_bound = filter_batch(full_batch + batch, PERCENTILE)
         if not full_batch:
             continue
         obs_v = torch.FloatTensor(obs)
@@ -120,10 +113,10 @@ if __name__ == "__main__":
         loss_v = objective(action_scores_v, acts_v)
         loss_v.backward()
         optimizer.step()
-        print("%d: loss=%.3f, rw_mean=%.3f, "
-              "rw_bound=%.3f, batch=%d" % (
-            iter_no, loss_v.item(), reward_mean,
-            reward_bound, len(full_batch)))
+        print(
+            f"{iter_no}: loss={loss_v.item():.2f}, rw_mean={reward_mean:.2f}, \
+            rw_bound={reward_bound:.2f}, batch={len(full_batch)}"
+        )
         writer.add_scalar("loss", loss_v.item(), iter_no)
         writer.add_scalar("reward_mean", reward_mean, iter_no)
         writer.add_scalar("reward_bound", reward_bound, iter_no)
@@ -131,3 +124,7 @@ if __name__ == "__main__":
             print("Solved!")
             break
     writer.close()
+
+
+if __name__ == "__main__":
+    main()

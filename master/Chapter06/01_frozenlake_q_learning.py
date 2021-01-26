@@ -1,19 +1,15 @@
-#!/usr/bin/env python3
 import gym
 import collections
 from tensorboardX import SummaryWriter
 
-ENV_NAME = "FrozenLake-v0"
-GAMMA = 0.9
-ALPHA = 0.2
-TEST_EPISODES = 20
-
 
 class Agent:
-    def __init__(self):
-        self.env = gym.make(ENV_NAME)
+    def __init__(self, env_name="FrozenLake-v0", gamma=0.9, alpha=0.2):
+        self.env = gym.make(env_name)
         self.state = self.env.reset()
         self.values = collections.defaultdict(float)
+        self.gamma = gamma
+        self.alpha = alpha
 
     def sample_env(self):
         action = self.env.action_space.sample()
@@ -33,9 +29,9 @@ class Agent:
 
     def value_update(self, s, a, r, next_s):
         best_v, _ = self.best_value_and_action(next_s)
-        new_v = r + GAMMA * best_v
+        new_v = r + self.gamma * best_v
         old_v = self.values[(s, a)]
-        self.values[(s, a)] = old_v * (1-ALPHA) + new_v * ALPHA
+        self.values[(s, a)] = old_v * (1 - self.alpha) + new_v * self.alpha
 
     def play_episode(self, env):
         total_reward = 0.0
@@ -50,11 +46,13 @@ class Agent:
         return total_reward
 
 
-if __name__ == "__main__":
-    test_env = gym.make(ENV_NAME)
-    agent = Agent()
+def main():
+    env_name = "FrozenLake-v0"
+    test_env = gym.make(env_name)
+    agent = Agent(env_name, gamma=0.9, alpha=0.5)
     writer = SummaryWriter(comment="-q-learning")
 
+    num_episodes = 20
     iter_no = 0
     best_reward = 0.0
     while True:
@@ -63,15 +61,18 @@ if __name__ == "__main__":
         agent.value_update(s, a, r, next_s)
 
         reward = 0.0
-        for _ in range(TEST_EPISODES):
+        for _ in range(num_episodes):
             reward += agent.play_episode(test_env)
-        reward /= TEST_EPISODES
+        reward /= num_episodes
         writer.add_scalar("reward", reward, iter_no)
         if reward > best_reward:
-            print("Best reward updated %.3f -> %.3f" % (
-                best_reward, reward))
+            print("Best reward updated %.3f -> %.3f" % (best_reward, reward))
             best_reward = reward
         if reward > 0.80:
             print("Solved in %d iterations!" % iter_no)
             break
     writer.close()
+
+
+if __name__ == "__main__":
+    main()
