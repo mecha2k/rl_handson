@@ -59,7 +59,7 @@ def filter_batch(batch, percentile):
 
 def main():
     env = gym.make("CartPole-v0")
-    env = gym.wrappers.Monitor(env, directory="mon", force=True)
+    # env = gym.wrappers.Monitor(env, directory="mon", force=True)
     obs_size = env.observation_space.shape[0]
     n_actions = env.action_space.n
 
@@ -79,7 +79,7 @@ def main():
         obs, acts, reward_b, reward_m = filter_batch(batch, PERCENTILE)
         obs_v = np.array(obs).reshape(-1, len(obs[0]))
         acts_v = np.array(list(map(lambda x: [0, 1] if x == 1 else [1, 0], acts)))
-        history = model.fit(obs_v, acts_v, epochs=10)
+        history = model.fit(obs_v, acts_v, epochs=10, verbose=0)
         loss = history.history["loss"]
         print(f"{iter_no}: loss={loss[0]:.2f}, rw_mean={reward_m:.1f}, rw_bound={reward_b:.1f}")
         writer.add_scalar("loss", loss[0], iter_no)
