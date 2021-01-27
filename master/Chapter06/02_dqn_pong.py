@@ -149,7 +149,7 @@ def main():
                 )
             )
             if best_m_reward is None or best_m_reward < m_reward:
-                torch.save(net.state_dict(), args.env + "-best_%.0f.dat" % m_reward)
+                torch.save(net.state_dict(), "./results/" + args.env + "-best_%.0f.dat" % m_reward)
                 if best_m_reward is not None:
                     print(f"Best reward updated {best_m_reward:.3f} -> {m_reward:.3f}")
                 best_m_reward = m_reward
