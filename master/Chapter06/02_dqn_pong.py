@@ -1,4 +1,4 @@
-from master.Chapter06.lib import dqn_model, wrappers
+from master.Chapter06.libc import dqn_model, wrappers
 
 import argparse
 import time
