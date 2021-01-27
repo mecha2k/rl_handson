@@ -10,10 +10,19 @@ from libcube import cubes
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--env", required=True, help="Type of env to train, supported types=%s" % cubes.names())
-    parser.add_argument("-n", "--number", type=int, default=10, help="Amount of scramble rounds, default=10")
+    parser.add_argument(
+        "-e",
+        "--env",
+        required=True,
+        help="Type of env to train, supported types=%s" % cubes.names(),
+    )
+    parser.add_argument(
+        "-n", "--number", type=int, default=10, help="Amount of scramble rounds, default=10"
+    )
     parser.add_argument("-d", "--depth", type=int, default=100, help="Scramble depth, default=10")
-    parser.add_argument("--seed", type=int, default=42, help="Seed to use, if zero, no seed used. default=42")
+    parser.add_argument(
+        "--seed", type=int, default=42, help="Seed to use, if zero, no seed used. default=42"
+    )
     parser.add_argument("-o", "--output", required=True, help="Output file to produce")
     args = parser.parse_args()
 

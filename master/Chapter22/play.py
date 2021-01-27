@@ -22,9 +22,12 @@ if __name__ == "__main__":
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
-    make_env = lambda: ptan.common.wrappers.wrap_dqn(gym.make("BreakoutNoFrameskip-v4"),
-                                                     stack_frames=common.FRAMES_COUNT,
-                                                     episodic_life=False, reward_clipping=False)
+    make_env = lambda: ptan.common.wrappers.wrap_dqn(
+        gym.make("BreakoutNoFrameskip-v4"),
+        stack_frames=common.FRAMES_COUNT,
+        episodic_life=False,
+        reward_clipping=False,
+    )
     env = make_env()
     env = gym.wrappers.Monitor(env, args.write)
     net = common.AtariA2C(env.observation_space.shape, env.action_space.n)

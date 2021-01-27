@@ -11,7 +11,7 @@ from lib import wob_vnc, model_vnc
 
 
 ENV_NAME = "wob.mini.ClickDialog-v0"
-REMOTE_ADDR = 'vnc://localhost:5900+15900'
+REMOTE_ADDR = "vnc://localhost:5900+15900"
 
 
 def step_env(env, action):
@@ -30,12 +30,14 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--model", help="Model file to load")
     parser.add_argument("--save", help="Enables screenshots and gives an images prefix")
     parser.add_argument("--count", type=int, default=1, help="Count of episodes to play, default=1")
-    parser.add_argument("--env", default=ENV_NAME, help="Environment name to solve, default=" + ENV_NAME)
-    parser.add_argument("--verbose", default=False, action='store_true', help="Display every step")
+    parser.add_argument(
+        "--env", default=ENV_NAME, help="Environment name to solve, default=" + ENV_NAME
+    )
+    parser.add_argument("--verbose", default=False, action="store_true", help="Display every step")
     args = parser.parse_args()
 
     env_name = args.env
-    if not env_name.startswith('wob.mini.'):
+    if not env_name.startswith("wob.mini."):
         env_name = "wob.mini." + env_name
 
     env = gym.make(env_name)
@@ -70,8 +72,9 @@ if __name__ == "__main__":
             if done or reward != 0:
                 print("Round %d done" % round_idx)
                 break
-    print("Done %d rounds, mean steps %.2f, mean reward %.3f" % (
-        args.count, steps_count / args.count, reward_sum / args.count
-    ))
+    print(
+        "Done %d rounds, mean steps %.2f, mean reward %.3f"
+        % (args.count, steps_count / args.count, reward_sum / args.count)
+    )
 
     pass

@@ -24,7 +24,9 @@ def play_func(params, net, cuda, exp_queue):
     selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(net, selector, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma, steps_count=1)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(
+        env, agent, gamma=params.gamma, steps_count=1
+    )
     exp_source_iter = iter(exp_source)
 
     frame_idx = 0
@@ -46,8 +48,8 @@ def play_func(params, net, cuda, exp_queue):
 
 
 if __name__ == "__main__":
-    mp.set_start_method('spawn')
-    params = common.HYPERPARAMS['pong']
+    mp.set_start_method("spawn")
+    params = common.HYPERPARAMS["pong"]
     params.batch_size *= PLAY_STEPS
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
@@ -60,7 +62,9 @@ if __name__ == "__main__":
     net = dqn_model.DQN(env.observation_space.shape, env.action_space.n).to(device)
     tgt_net = ptan.agent.TargetNet(net)
 
-    buffer = ptan.experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.replay_size)
+    buffer = ptan.experience.ExperienceReplayBuffer(
+        experience_source=None, buffer_size=params.replay_size
+    )
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     exp_queue = mp.Queue(maxsize=PLAY_STEPS * 2)
@@ -70,8 +74,8 @@ if __name__ == "__main__":
     frame_idx = 0
 
     while play_proc.is_alive():
-#        frame_idx += PLAY_STEPS
-        #for _ in range(PLAY_STEPS):
+        #        frame_idx += PLAY_STEPS
+        # for _ in range(PLAY_STEPS):
         while exp_queue.qsize() > 1:
             exp = exp_queue.get()
             if exp is None:
@@ -86,7 +90,8 @@ if __name__ == "__main__":
             continue
         optimizer.zero_grad()
         batch = buffer.sample(params.batch_size)
-        loss_v = common.calc_loss_dqn(batch, net, tgt_net.target_model, gamma=params.gamma, device=device)
+        loss_v = common.calc_loss_dqn(
+            batch, net, tgt_net.target_model, gamma=params.gamma, device=device
+        )
         loss_v.backward()
         optimizer.step()
-

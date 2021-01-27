@@ -36,8 +36,9 @@ def grad_fun(net, queue):
             loss_v = F.mse_loss(out_v, y_v)
             loss_v.backward()
 
-            grads = [param.grad.clone() if param.grad is not None else None
-                     for param in net.parameters()]
+            grads = [
+                param.grad.clone() if param.grad is not None else None for param in net.parameters()
+            ]
 
             queue.put(grads)
             sum_loss += loss_v.data.cpu().numpy()
@@ -48,7 +49,7 @@ def grad_fun(net, queue):
 
 
 if __name__ == "__main__":
-    mp.set_start_method('spawn')
+    mp.set_start_method("spawn")
     net = nn.Linear(in_features=1, out_features=1)
     if CUDA:
         net.cuda()
@@ -81,4 +82,3 @@ if __name__ == "__main__":
         optimizer.step()
         tgt_net.sync()
     pass
-

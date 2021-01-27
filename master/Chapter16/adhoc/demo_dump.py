@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+
 sys.path.append(os.getcwd())
 sys.path.append("..")
 import argparse
@@ -30,12 +31,13 @@ def test_mouse_coords():
         pass
 
 
-
 if __name__ == "__main__":
-#    test_mouse_coords()
+    #    test_mouse_coords()
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--demo", required=True, help="Dir name to scan for demos")
-    parser.add_argument("-e", "--env", default=DEFAULT_ENV, help="Environment name to load, default=" + DEFAULT_ENV)
+    parser.add_argument(
+        "-e", "--env", default=DEFAULT_ENV, help="Environment name to load, default=" + DEFAULT_ENV
+    )
     parser.add_argument("-o", "--output", required=True, help="Output prefix to save images")
     args = parser.parse_args()
 
@@ -53,5 +55,3 @@ if __name__ == "__main__":
         print(fname, text)
 
     pass
-
-

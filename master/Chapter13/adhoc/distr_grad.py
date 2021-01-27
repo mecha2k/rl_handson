@@ -40,8 +40,10 @@ if __name__ == "__main__":
             out_v = tgt_net.target_model(x_v)
             loss_v = F.mse_loss(out_v, y_v)
             loss_v.backward()
-            grads = [param.grad.data.cpu().numpy() if param.grad is not None else None
-                     for param in tgt_net.target_model.parameters()]
+            grads = [
+                param.grad.data.cpu().numpy() if param.grad is not None else None
+                for param in tgt_net.target_model.parameters()
+            ]
 
             # apply gradients
             for grad, param in zip(grads, net.parameters()):
@@ -54,4 +56,3 @@ if __name__ == "__main__":
             break
 
     pass
-

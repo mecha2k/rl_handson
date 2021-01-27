@@ -34,20 +34,22 @@ class L3G4200D(st_family.STSensor):
         self._write_reg(self.CTRL4_REG, 0b10000000)
 
     def __len__(self):
-        return 3*2
+        return 3 * 2
 
     def refresh(self):
         self.i2c.readfrom_mem_into(self.addr, self.AXIS_X_REG, self._byte[0])
-        self.i2c.readfrom_mem_into(self.addr, self.AXIS_X_REG+1, self._byte[1])
+        self.i2c.readfrom_mem_into(self.addr, self.AXIS_X_REG + 1, self._byte[1])
         self.i2c.readfrom_mem_into(self.addr, self.AXIS_Y_REG, self._byte[2])
-        self.i2c.readfrom_mem_into(self.addr, self.AXIS_Y_REG+1, self._byte[3])
+        self.i2c.readfrom_mem_into(self.addr, self.AXIS_Y_REG + 1, self._byte[3])
         self.i2c.readfrom_mem_into(self.addr, self.AXIS_Z_REG, self._byte[4])
-        self.i2c.readfrom_mem_into(self.addr, self.AXIS_Z_REG+1, self._byte[5])
+        self.i2c.readfrom_mem_into(self.addr, self.AXIS_Z_REG + 1, self._byte[5])
 
     @classmethod
     def decode(cls, b):
         return [
-            st_family.decode_s16(b[ofs:ofs + 2]) * cls.L3G4200D_SCALE_250DPS_MUL * cls.L3G4200D_DEG_TO_RAD
+            st_family.decode_s16(b[ofs : ofs + 2])
+            * cls.L3G4200D_SCALE_250DPS_MUL
+            * cls.L3G4200D_DEG_TO_RAD
             for ofs in range(0, 6, 2)
         ]
 

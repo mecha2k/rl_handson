@@ -7,7 +7,7 @@ import pickle
 
 from . import cornell
 
-UNKNOWN_TOKEN = '#UNK'
+UNKNOWN_TOKEN = "#UNK"
 BEGIN_TOKEN = "#BEG"
 END_TOKEN = "#END"
 MAX_TOKENS = 20
@@ -82,7 +82,7 @@ def iterate_batches(data, batch_size):
 
     ofs = 0
     while True:
-        batch = data[ofs*batch_size:(ofs+1)*batch_size]
+        batch = data[ofs * batch_size : (ofs + 1) * batch_size]
         if len(batch) <= 1:
             break
         yield batch
@@ -94,17 +94,26 @@ def load_data(genre_filter, max_tokens=MAX_TOKENS, min_token_freq=MIN_TOKEN_FEQ)
     if not dialogues:
         log.error("No dialogues found, exit!")
         sys.exit()
-    log.info("Loaded %d dialogues with %d phrases, generating training pairs",
-             len(dialogues), sum(map(len, dialogues)))
+    log.info(
+        "Loaded %d dialogues with %d phrases, generating training pairs",
+        len(dialogues),
+        sum(map(len, dialogues)),
+    )
     phrase_pairs = dialogues_to_pairs(dialogues, max_tokens=max_tokens)
     log.info("Counting freq of words...")
     word_counts = collections.Counter()
     for dial in dialogues:
         for p in dial:
             word_counts.update(p)
-    freq_set = set(map(lambda p: p[0], filter(lambda p: p[1] >= min_token_freq, word_counts.items())))
-    log.info("Data has %d uniq words, %d of them occur more than %d",
-             len(word_counts), len(freq_set), min_token_freq)
+    freq_set = set(
+        map(lambda p: p[0], filter(lambda p: p[1] >= min_token_freq, word_counts.items()))
+    )
+    log.info(
+        "Data has %d uniq words, %d of them occur more than %d",
+        len(word_counts),
+        len(freq_set),
+        min_token_freq,
+    )
     phrase_dict = phrase_pairs_dict(phrase_pairs, freq_set)
     return phrase_pairs, phrase_dict
 
@@ -137,7 +146,9 @@ def dialogues_to_pairs(dialogues, max_tokens=None):
         prev_phrase = None
         for phrase in dial:
             if prev_phrase is not None:
-                if max_tokens is None or (len(prev_phrase) <= max_tokens and len(phrase) <= max_tokens):
+                if max_tokens is None or (
+                    len(prev_phrase) <= max_tokens and len(phrase) <= max_tokens
+                ):
                     result.append((prev_phrase, phrase))
             prev_phrase = phrase
     return result

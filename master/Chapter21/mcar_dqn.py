@@ -14,65 +14,73 @@ from lib import common, dqn_extra
 
 
 HYPERPARAMS = {
-    'egreedy': SimpleNamespace(**{
-        'env_name':         "MountainCar-v0",
-        'stop_reward':      None,
-        'stop_test_reward': -130.0,
-        'run_name':         'egreedy',
-        'replay_size':      100000,
-        'replay_initial':   100,
-        'target_net_sync':  100,
-        'epsilon_frames':   10**5,
-        'epsilon_start':    1.0,
-        'epsilon_final':    0.02,
-        'learning_rate':    0.0001,
-        'gamma':            0.99,
-        'batch_size':       32,
-        'eps_decay_trigger': False,
-    }),
-    'egreedy-long': SimpleNamespace(**{
-        'env_name':         "MountainCar-v0",
-        'stop_reward':      None,
-        'stop_test_reward': -130.0,
-        'run_name':         'egreedy-long',
-        'replay_size':      100000,
-        'replay_initial':   1000,
-        'target_net_sync':  100,
-        'epsilon_frames':   10 ** 6,
-        'epsilon_start':    1.0,
-        'epsilon_final':    0.02,
-        'learning_rate':    0.0001,
-        'gamma':            0.99,
-        'batch_size':       32,
-        'eps_decay_trigger': True,
-    }),
-    'noisynet': SimpleNamespace(**{
-        'env_name':         "MountainCar-v0",
-        'stop_reward':      None,
-        'stop_test_reward': -130.0,
-        'run_name':         'noisynet',
-        'replay_size':      100000,
-        'replay_initial':   1000,
-        'target_net_sync':  1000,
-        'learning_rate':    0.0001,
-        'gamma':            0.99,
-        'batch_size':       32,
-        'eps_decay_trigger': False,
-    }),
-    'counts': SimpleNamespace(**{
-        'env_name':         "MountainCar-v0",
-        'stop_reward':      None,
-        'stop_test_reward': -130.0,
-        'run_name':         'counts',
-        'replay_size':      100000,
-        'replay_initial':   1000,
-        'target_net_sync':  1000,
-        'learning_rate':    0.0001,
-        'gamma':            0.99,
-        'batch_size':       32,
-        'counts_reward_scale': 0.5,
-        'eps_decay_trigger': False,
-    }),
+    "egreedy": SimpleNamespace(
+        **{
+            "env_name": "MountainCar-v0",
+            "stop_reward": None,
+            "stop_test_reward": -130.0,
+            "run_name": "egreedy",
+            "replay_size": 100000,
+            "replay_initial": 100,
+            "target_net_sync": 100,
+            "epsilon_frames": 10 ** 5,
+            "epsilon_start": 1.0,
+            "epsilon_final": 0.02,
+            "learning_rate": 0.0001,
+            "gamma": 0.99,
+            "batch_size": 32,
+            "eps_decay_trigger": False,
+        }
+    ),
+    "egreedy-long": SimpleNamespace(
+        **{
+            "env_name": "MountainCar-v0",
+            "stop_reward": None,
+            "stop_test_reward": -130.0,
+            "run_name": "egreedy-long",
+            "replay_size": 100000,
+            "replay_initial": 1000,
+            "target_net_sync": 100,
+            "epsilon_frames": 10 ** 6,
+            "epsilon_start": 1.0,
+            "epsilon_final": 0.02,
+            "learning_rate": 0.0001,
+            "gamma": 0.99,
+            "batch_size": 32,
+            "eps_decay_trigger": True,
+        }
+    ),
+    "noisynet": SimpleNamespace(
+        **{
+            "env_name": "MountainCar-v0",
+            "stop_reward": None,
+            "stop_test_reward": -130.0,
+            "run_name": "noisynet",
+            "replay_size": 100000,
+            "replay_initial": 1000,
+            "target_net_sync": 1000,
+            "learning_rate": 0.0001,
+            "gamma": 0.99,
+            "batch_size": 32,
+            "eps_decay_trigger": False,
+        }
+    ),
+    "counts": SimpleNamespace(
+        **{
+            "env_name": "MountainCar-v0",
+            "stop_reward": None,
+            "stop_test_reward": -130.0,
+            "run_name": "counts",
+            "replay_size": 100000,
+            "replay_initial": 1000,
+            "target_net_sync": 1000,
+            "learning_rate": 0.0001,
+            "gamma": 0.99,
+            "batch_size": 32,
+            "counts_reward_scale": 0.5,
+            "eps_decay_trigger": False,
+        }
+    ),
 }
 
 N_STEPS = 4
@@ -88,25 +96,32 @@ if __name__ == "__main__":
     torch.manual_seed(common.SEED)
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--name", required=True, help="Run name")
-    parser.add_argument("-p", "--params", default='egreedy', choices=list(HYPERPARAMS.keys()),
-                        help="Parameters, default=egreedy")
+    parser.add_argument(
+        "-p",
+        "--params",
+        default="egreedy",
+        choices=list(HYPERPARAMS.keys()),
+        help="Parameters, default=egreedy",
+    )
     args = parser.parse_args()
 
     params = HYPERPARAMS[args.params]
 
     env = gym.make(params.env_name)
     test_env = gym.make(params.env_name)
-    if args.params == 'counts':
-        env = common.PseudoCountRewardWrapper(env, reward_scale=params.counts_reward_scale, hash_function=counts_hash)
+    if args.params == "counts":
+        env = common.PseudoCountRewardWrapper(
+            env, reward_scale=params.counts_reward_scale, hash_function=counts_hash
+        )
     env.seed(common.SEED)
-    if args.params.startswith("egreedy") or args.params == 'counts':
+    if args.params.startswith("egreedy") or args.params == "counts":
         net = dqn_extra.MountainCarBaseDQN(env.observation_space.shape[0], env.action_space.n)
-    elif args.params == 'noisynet':
+    elif args.params == "noisynet":
         net = dqn_extra.MountainCarNoisyNetDQN(env.observation_space.shape[0], env.action_space.n)
     tgt_net = ptan.agent.TargetNet(net)
     print(net)
 
-    if args.params.startswith('egreedy'):
+    if args.params.startswith("egreedy"):
         selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
         epsilon_tracker = common.EpsilonTracker(selector, params)
         training_enabled = not params.eps_decay_trigger
@@ -118,21 +133,19 @@ if __name__ == "__main__":
     agent = ptan.agent.DQNAgent(net, selector, preprocessor=ptan.agent.float32_preprocessor)
 
     exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, gamma=params.gamma, steps_count=N_STEPS)
-    buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=params.replay_size)
+        env, agent, gamma=params.gamma, steps_count=N_STEPS
+    )
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     def process_batch(engine, batch):
         if not training_enabled:
-            return {
-                "loss": 0.0,
-                "epsilon": selector.epsilon
-            }
+            return {"loss": 0.0, "epsilon": selector.epsilon}
 
         optimizer.zero_grad()
-        loss_v = common.calc_loss_double_dqn(batch, net, tgt_net.target_model,
-                                             gamma=params.gamma**N_STEPS)
+        loss_v = common.calc_loss_double_dqn(
+            batch, net, tgt_net.target_model, gamma=params.gamma ** N_STEPS
+        )
         loss_v.backward()
         optimizer.step()
         res = {
@@ -144,15 +157,20 @@ if __name__ == "__main__":
 
         if args.params.startswith("egreedy"):
             epsilon_tracker.frame(engine.state.iteration - epsilon_tracker_frame)
-            res['epsilon'] = selector.epsilon
+            res["epsilon"] = selector.epsilon
         # reset noise every training step, this is fine in off-policy method
-        if args.params == 'noisynet':
+        if args.params == "noisynet":
             net.sample_noise()
         return res
 
     engine = Engine(process_batch)
-    common.setup_ignite(engine, params, exp_source, args.name, extra_metrics=(
-        'test_reward', 'avg_test_reward', 'test_steps'))
+    common.setup_ignite(
+        engine,
+        params,
+        exp_source,
+        args.name,
+        extra_metrics=("test_reward", "avg_test_reward", "test_steps"),
+    )
 
     @engine.on(ptan_ignite.EpisodeEvents.EPISODE_COMPLETED)
     def check_reward_trigger(trainer: Engine):
@@ -185,12 +203,13 @@ if __name__ == "__main__":
         else:
             test_reward_avg = test_reward_avg * 0.95 + 0.05 * reward
         engine.state.test_reward_avg = test_reward_avg
-        print("Test done: got %.3f reward after %d steps, avg reward %.3f" % (
-            reward, steps, test_reward_avg
-        ))
-        engine.state.metrics['test_reward'] = reward
-        engine.state.metrics['avg_test_reward'] = test_reward_avg
-        engine.state.metrics['test_steps'] = steps
+        print(
+            "Test done: got %.3f reward after %d steps, avg reward %.3f"
+            % (reward, steps, test_reward_avg)
+        )
+        engine.state.metrics["test_reward"] = reward
+        engine.state.metrics["avg_test_reward"] = test_reward_avg
+        engine.state.metrics["test_steps"] = steps
 
         if test_reward_avg > params.stop_test_reward:
             print("Reward boundary has crossed, stopping training. Contgrats!")

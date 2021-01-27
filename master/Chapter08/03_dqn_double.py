@@ -18,10 +18,8 @@ STATES_TO_EVALUATE = 1000
 EVAL_EVERY_FRAME = 100
 
 
-def calc_loss_double_dqn(batch, net, tgt_net, gamma,
-                         device="cpu", double=True):
-    states, actions, rewards, dones, next_states = \
-        common.unpack_batch(batch)
+def calc_loss_double_dqn(batch, net, tgt_net, gamma, device="cpu", double=True):
+    states, actions, rewards, dones, next_states = common.unpack_batch(batch)
 
     states_v = torch.tensor(states).to(device)
     actions_v = torch.tensor(actions).to(device)
@@ -36,8 +34,7 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma,
         if double:
             next_state_acts = net(next_states_v).max(1)[1]
             next_state_acts = next_state_acts.unsqueeze(-1)
-            next_state_vals = tgt_net(next_states_v).gather(
-                1, next_state_acts).squeeze(-1)
+            next_state_vals = tgt_net(next_states_v).gather(1, next_state_acts).squeeze(-1)
         else:
             next_state_vals = tgt_net(next_states_v).max(1)[0]
         next_state_vals[done_mask] = 0.0
@@ -48,7 +45,7 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma,
 if __name__ == "__main__":
     random.seed(common.SEED)
     torch.manual_seed(common.SEED)
-    params = common.HYPERPARAMS['pong']
+    params = common.HYPERPARAMS["pong"]
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
     parser.add_argument("--double", default=False, action="store_true", help="Enable double dqn")
@@ -66,17 +63,15 @@ if __name__ == "__main__":
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(net, selector, device=device)
 
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, gamma=params.gamma)
-    buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=params.replay_size)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     def process_batch(engine, batch):
         optimizer.zero_grad()
-        loss_v = calc_loss_double_dqn(batch, net, tgt_net.target_model,
-                                      gamma=params.gamma, device=device,
-                                      double=args.double)
+        loss_v = calc_loss_double_dqn(
+            batch, net, tgt_net.target_model, gamma=params.gamma, device=device, double=args.double
+        )
         loss_v.backward()
         optimizer.step()
         epsilon_tracker.frame(engine.state.iteration)
@@ -89,13 +84,14 @@ if __name__ == "__main__":
                 eval_states = [np.array(transition.state, copy=False) for transition in eval_states]
                 eval_states = np.array(eval_states, copy=False)
                 engine.state.eval_states = eval_states
-            engine.state.metrics["values"] = \
-                common.calc_values_of_states(eval_states, net, device)
+            engine.state.metrics["values"] = common.calc_values_of_states(eval_states, net, device)
         return {
             "loss": loss_v.item(),
             "epsilon": selector.epsilon,
         }
 
     engine = Engine(process_batch)
-    common.setup_ignite(engine, params, exp_source, f"{NAME}={args.double}", extra_metrics=('values',))
+    common.setup_ignite(
+        engine, params, exp_source, f"{NAME}={args.double}", extra_metrics=("values",)
+    )
     engine.run(common.batch_generator(buffer, params.replay_initial, params.batch_size))

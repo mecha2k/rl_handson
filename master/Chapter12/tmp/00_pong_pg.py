@@ -53,7 +53,7 @@ class MeanBuffer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
-    parser.add_argument("-n", '--name', required=True, help="Name of the run")
+    parser.add_argument("-n", "--name", required=True, help="Name of the run")
     args = parser.parse_args()
 
     envs = [make_env() for _ in range(ENV_COUNT)]
@@ -65,7 +65,9 @@ if __name__ == "__main__":
     print(net)
 
     agent = ptan.agent.PolicyAgent(net, apply_softmax=True, cuda=args.cuda)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(
+        envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS
+    )
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE, eps=1e-3)
 
@@ -118,9 +120,13 @@ if __name__ == "__main__":
             loss_policy_v = -log_prob_actions_v.mean()
 
             loss_policy_v.backward(retain_graph=True)
-            grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
-                                    for p in net.parameters()
-                                    if p.grad is not None])
+            grads = np.concatenate(
+                [
+                    p.grad.data.cpu().numpy().flatten()
+                    for p in net.parameters()
+                    if p.grad is not None
+                ]
+            )
 
             prob_v = F.softmax(logits_v)
             entropy_v = -(prob_v * log_prob_v).sum(dim=1).mean()

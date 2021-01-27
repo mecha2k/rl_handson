@@ -45,17 +45,17 @@ class Lis3MDL(st_family.STSensor):
         self._write_reg(self.CTRL5_REG, 0b01000000)
 
     def __len__(self):
-        return 4*2
+        return 4 * 2
 
     def refresh(self):
         self.i2c.readfrom_mem_into(self.addr, self.AXIS_X_REG, self._byte[0])
-        self.i2c.readfrom_mem_into(self.addr, self.AXIS_X_REG+1, self._byte[1])
+        self.i2c.readfrom_mem_into(self.addr, self.AXIS_X_REG + 1, self._byte[1])
 
         self.i2c.readfrom_mem_into(self.addr, self.AXIS_Y_REG, self._byte[2])
-        self.i2c.readfrom_mem_into(self.addr, self.AXIS_Y_REG+1, self._byte[3])
+        self.i2c.readfrom_mem_into(self.addr, self.AXIS_Y_REG + 1, self._byte[3])
 
         self.i2c.readfrom_mem_into(self.addr, self.AXIS_Z_REG, self._byte[4])
-        self.i2c.readfrom_mem_into(self.addr, self.AXIS_Z_REG+1, self._byte[5])
+        self.i2c.readfrom_mem_into(self.addr, self.AXIS_Z_REG + 1, self._byte[5])
 
         self.i2c.readfrom_mem_into(self.addr, self.TEMP_REG, self._byte[6])
-        self.i2c.readfrom_mem_into(self.addr, self.TEMP_REG+1, self._byte[7])
+        self.i2c.readfrom_mem_into(self.addr, self.TEMP_REG + 1, self._byte[7])

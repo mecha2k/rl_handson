@@ -20,6 +20,7 @@ SAVE_EVERY_BATCH = 1000
 OBS_WEIGHT = 10.0
 REWARD_WEIGHT = 1.0
 
+
 def get_obs_diff(prev_obs, cur_obs):
     prev = np.array(prev_obs)[-1]
     cur = np.array(cur_obs)[-1]
@@ -30,10 +31,10 @@ def get_obs_diff(prev_obs, cur_obs):
 
 def iterate_batches(envs, net, device="cpu"):
     act_selector = ptan.actions.ProbabilityActionSelector()
-    mb_obs = np.zeros((BATCH_SIZE, ) + common.IMG_SHAPE, dtype=np.uint8)
-    mb_obs_next = np.zeros((BATCH_SIZE, ) + i2a.EM_OUT_SHAPE, dtype=np.float32)
-    mb_actions = np.zeros((BATCH_SIZE, ), dtype=np.int32)
-    mb_rewards = np.zeros((BATCH_SIZE, ), dtype=np.float32)
+    mb_obs = np.zeros((BATCH_SIZE,) + common.IMG_SHAPE, dtype=np.uint8)
+    mb_obs_next = np.zeros((BATCH_SIZE,) + i2a.EM_OUT_SHAPE, dtype=np.float32)
+    mb_actions = np.zeros((BATCH_SIZE,), dtype=np.int32)
+    mb_rewards = np.zeros((BATCH_SIZE,), dtype=np.float32)
     obs = [e.reset() for e in envs]
     total_reward = [0.0] * NUM_ENVS
     total_steps = [0] * NUM_ENVS
@@ -87,7 +88,9 @@ if __name__ == "__main__":
     writer = SummaryWriter(comment="-02_env_" + args.name)
 
     net = common.AtariA2C(envs[0].observation_space.shape, envs[0].action_space.n)
-    net_em = i2a.EnvironmentModel(envs[0].observation_space.shape, envs[0].action_space.n).to(device)
+    net_em = i2a.EnvironmentModel(envs[0].observation_space.shape, envs[0].action_space.n).to(
+        device
+    )
     net.load_state_dict(torch.load(args.model, map_location=lambda storage, loc: storage))
     net = net.to(device)
     print(net_em)
@@ -96,12 +99,21 @@ if __name__ == "__main__":
     step_idx = 0
     best_loss = np.inf
     with ptan.common.utils.TBMeanTracker(writer, batch_size=100) as tb_tracker:
-        for mb_obs, mb_obs_next, mb_actions, mb_rewards, done_rewards, done_steps in iterate_batches(envs, net, device):
+        for (
+            mb_obs,
+            mb_obs_next,
+            mb_actions,
+            mb_rewards,
+            done_rewards,
+            done_steps,
+        ) in iterate_batches(envs, net, device):
             if len(done_rewards) > 0:
                 m_reward = np.mean(done_rewards)
                 m_steps = np.mean(done_steps)
-                print("%d: done %d episodes, mean reward=%.2f, steps=%.2f" % (
-                    step_idx, len(done_rewards), m_reward, m_steps))
+                print(
+                    "%d: done %d episodes, mean reward=%.2f, steps=%.2f"
+                    % (step_idx, len(done_rewards), m_reward, m_steps)
+                )
                 tb_tracker.track("total_reward", m_reward, step_idx)
                 tb_tracker.track("total_steps", m_steps, step_idx)
 
@@ -111,7 +123,7 @@ if __name__ == "__main__":
             rewards_v = torch.FloatTensor(mb_rewards).to(device)
 
             optimizer.zero_grad()
-            out_obs_next_v, out_reward_v = net_em(obs_v.float()/255, actions_t)
+            out_obs_next_v, out_reward_v = net_em(obs_v.float() / 255, actions_t)
             loss_obs_v = F.mse_loss(out_obs_next_v.squeeze(-1), obs_next_v)
             loss_rew_v = F.mse_loss(out_reward_v.squeeze(-1), rewards_v)
             loss_total_v = OBS_WEIGHT * loss_obs_v + REWARD_WEIGHT * loss_rew_v

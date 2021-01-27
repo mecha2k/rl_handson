@@ -15,10 +15,8 @@ NAME = "05_prio_replay"
 PRIO_REPLAY_ALPHA = 0.6
 
 
-def calc_loss(batch, batch_weights, net, tgt_net,
-              gamma, device="cpu"):
-    states, actions, rewards, dones, next_states = \
-        common.unpack_batch(batch)
+def calc_loss(batch, batch_weights, net, tgt_net, gamma, device="cpu"):
+    states, actions, rewards, dones, next_states = common.unpack_batch(batch)
 
     states_v = torch.tensor(states).to(device)
     actions_v = torch.tensor(actions).to(device)
@@ -36,14 +34,13 @@ def calc_loss(batch, batch_weights, net, tgt_net,
         exp_sa_vals = next_s_vals.detach() * gamma + rewards_v
     l = (state_action_vals - exp_sa_vals) ** 2
     losses_v = batch_weights_v * l
-    return losses_v.mean(), \
-           (losses_v + 1e-5).data.cpu().numpy()
+    return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
 
 
 if __name__ == "__main__":
     random.seed(common.SEED)
     torch.manual_seed(common.SEED)
-    params = common.HYPERPARAMS['pong']
+    params = common.HYPERPARAMS["pong"]
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
     args = parser.parse_args()
@@ -60,18 +57,16 @@ if __name__ == "__main__":
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(net, selector, device=device)
 
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, gamma=params.gamma)
-    buffer = dqn_extra.PrioReplayBuffer(
-        exp_source, params.replay_size, PRIO_REPLAY_ALPHA)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma)
+    buffer = dqn_extra.PrioReplayBuffer(exp_source, params.replay_size, PRIO_REPLAY_ALPHA)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     def process_batch(engine, batch_data):
         batch, batch_indices, batch_weights = batch_data
         optimizer.zero_grad()
         loss_v, sample_prios = calc_loss(
-            batch, batch_weights, net, tgt_net.target_model,
-            gamma=params.gamma, device=device)
+            batch, batch_weights, net, tgt_net.target_model, gamma=params.gamma, device=device
+        )
         loss_v.backward()
         optimizer.step()
         buffer.update_priorities(batch_indices, sample_prios)

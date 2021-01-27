@@ -25,7 +25,7 @@ def do_action(state: int, action: int) -> int:
     """
     # left action always succeeds and brings us to the left
     if action == 0:
-        return state-1
+        return state - 1
 
     if state == 1:
         return random.choices([1, 2], weights=[0.4, 0.6])[0]
@@ -36,10 +36,16 @@ def do_action(state: int, action: int) -> int:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--steps", type=int, default=100, help="Amount of steps to simulate, default=100")
-    parser.add_argument("--episode-length", type=int, default=10, help="Limit of one episode, default=10")
+    parser.add_argument(
+        "-n", "--steps", type=int, default=100, help="Amount of steps to simulate, default=100"
+    )
+    parser.add_argument(
+        "--episode-length", type=int, default=10, help="Limit of one episode, default=10"
+    )
     parser.add_argument("--seed", type=int, default=SEED, help="Seed to use, default=%d" % SEED)
-    parser.add_argument("--env-len", type=int, default=6, help="Amount of states in the environment, default=6")
+    parser.add_argument(
+        "--env-len", type=int, default=6, help="Amount of states in the environment, default=6"
+    )
     args = parser.parse_args()
     random.seed(args.seed)
 
@@ -56,5 +62,5 @@ if __name__ == "__main__":
             state = 1
             episode_step = 0
 
-    for state in range(1, args.env_len+1):
+    for state in range(1, args.env_len + 1):
         print("%d:\t%d" % (state, states_count[state]))

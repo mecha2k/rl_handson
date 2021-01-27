@@ -19,10 +19,7 @@ class Net(nn.Module):
     def __init__(self, obs_size, action_size):
         super(Net, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(obs_size, 32),
-            nn.ReLU(),
-            nn.Linear(32, action_size),
-            nn.Softmax(dim=1)
+            nn.Linear(obs_size, 32), nn.ReLU(), nn.Linear(32, action_size), nn.Softmax(dim=1)
         )
 
     def forward(self, x):
@@ -119,19 +116,14 @@ if __name__ == "__main__":
             print("Solved in %d steps" % step_idx)
             break
 
-        train_step(net, batch_noise, batch_reward,
-                   writer, step_idx)
+        train_step(net, batch_noise, batch_reward, writer, step_idx)
         writer.add_scalar("reward_mean", m_reward, step_idx)
-        writer.add_scalar("reward_std", np.std(batch_reward),
-                          step_idx)
-        writer.add_scalar("reward_max", np.max(batch_reward),
-                          step_idx)
-        writer.add_scalar("batch_episodes", len(batch_reward),
-                          step_idx)
+        writer.add_scalar("reward_std", np.std(batch_reward), step_idx)
+        writer.add_scalar("reward_max", np.max(batch_reward), step_idx)
+        writer.add_scalar("batch_episodes", len(batch_reward), step_idx)
         writer.add_scalar("batch_steps", batch_steps, step_idx)
         speed = batch_steps / (time.time() - t_start)
         writer.add_scalar("speed", speed, step_idx)
-        print("%d: reward=%.2f, speed=%.2f f/s" % (
-            step_idx, m_reward, speed))
+        print("%d: reward=%.2f, speed=%.2f f/s" % (step_idx, m_reward, speed))
 
     pass

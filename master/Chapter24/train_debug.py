@@ -22,8 +22,8 @@ log = logging.getLogger("train_debug")
 MAX_DEPTH = 10
 ROUND_COUNTS = 100
 # debug params
-#MAX_DEPTH = 5
-#ROUND_COUNTS = 2
+# MAX_DEPTH = 5
+# ROUND_COUNTS = 2
 
 
 def gen_states(cube_env, max_depth, round_counts):
@@ -38,7 +38,7 @@ def gen_states(cube_env, max_depth, round_counts):
     for _ in range(round_counts):
         data = cube_env.scramble_cube(max_depth, return_inverse=True)
         for depth, state, inv_action in data:
-            result[depth-1].append((state, inv_action.value))
+            result[depth - 1].append((state, inv_action.value))
     return result
 
 
@@ -47,7 +47,12 @@ if __name__ == "__main__":
 
     logging.basicConfig(format="%(asctime)-15s %(levelname)s %(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser()
-    parser.add_argument("-e", "--env", required=True, help="Type of env to train, supported types=%s" % cubes.names())
+    parser.add_argument(
+        "-e",
+        "--env",
+        required=True,
+        help="Type of env to train, supported types=%s" % cubes.names(),
+    )
     parser.add_argument("-m", "--model", required=True, help="Model file to load")
     parser.add_argument("-o", "--output", required=True, help="Output prefix for plots")
     args = parser.parse_args()
@@ -59,7 +64,7 @@ if __name__ == "__main__":
     net.eval()
     log.info("Network loaded from %s", args.model)
 
-#    model.make_train_data(cube_env, net, device='cpu', batch_size=10, scramble_depth=2, shuffle=False)
+    #    model.make_train_data(cube_env, net, device='cpu', batch_size=10, scramble_depth=2, shuffle=False)
 
     states_by_depth = gen_states(cube_env, max_depth=MAX_DEPTH, round_counts=ROUND_COUNTS)
     # for idx, states in enumerate(states_by_depth):
@@ -69,7 +74,7 @@ if __name__ == "__main__":
     data = []
     for depth, states in enumerate(states_by_depth):
         for s, inv_action in states:
-            data.append((depth+1, s, inv_action))
+            data.append((depth + 1, s, inv_action))
     depths, states, inv_actions = map(list, zip(*data))
 
     # process states with net

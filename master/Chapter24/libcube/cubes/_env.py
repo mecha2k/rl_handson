@@ -9,9 +9,19 @@ _registry = {}
 
 
 class CubeEnv:
-    def __init__(self, name, state_type, initial_state, is_goal_pred,
-                 action_enum, transform_func, inverse_action_func,
-                 render_func, encoded_shape, encode_func):
+    def __init__(
+        self,
+        name,
+        state_type,
+        initial_state,
+        is_goal_pred,
+        action_enum,
+        transform_func,
+        inverse_action_func,
+        render_func,
+        encoded_shape,
+        encode_func,
+    ):
         self.name = name
         self._state_type = state_type
         self.initial_state = initial_state
@@ -85,9 +95,9 @@ class CubeEnv:
             prev_action = action
             if return_inverse:
                 inv_action = self.inverse_action(action)
-                res = (depth+1, state, inv_action)
+                res = (depth + 1, state, inv_action)
             else:
-                res = (depth+1, state)
+                res = (depth + 1, state)
             result.append(res)
         return result
 

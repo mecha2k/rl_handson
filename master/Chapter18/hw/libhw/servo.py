@@ -2,7 +2,7 @@ import pyb
 
 
 class ServoBrain:
-    FREQ = 50               # 20ms -- standard pulse interval for servos
+    FREQ = 50  # 20ms -- standard pulse interval for servos
     MIN_PERCENT = 2.3
     MAX_PERCENT = 12.7
     MIN_POS = 0
@@ -57,7 +57,9 @@ class ServoBrain:
 
     @classmethod
     def position_to_percent(cls, pos):
-        return (pos-cls.MIN_POS)*(cls.MAX_PERCENT - cls.MIN_PERCENT)/(cls.MAX_POS - cls.MIN_POS) + cls.MIN_PERCENT
+        return (pos - cls.MIN_POS) * (cls.MAX_PERCENT - cls.MIN_PERCENT) / (
+            cls.MAX_POS - cls.MIN_POS
+        ) + cls.MIN_PERCENT
 
     def _apply_positions(self, values):
         for p, ch, inv in zip(values, self._channels, self._inversions):
@@ -94,6 +96,7 @@ class ServoBrainOld:
     """
     Shouldn't be used, kept only for demonstration purposes
     """
+
     MIN_POS = -10
     MAX_POS = 10
     NEUT_POS = 0
@@ -106,7 +109,7 @@ class ServoBrainOld:
 
     def __init__(self, servo_pins, base_timer_index=1):
         if isinstance(servo_pins, str):
-            servo_pins = (servo_pins, )
+            servo_pins = (servo_pins,)
         self.servo_pins = servo_pins
         self.base_timer_index = base_timer_index
         self._base_timer = pyb.Timer(base_timer_index)
@@ -143,7 +146,7 @@ class ServoBrainOld:
             self._pins.append(p)
             self._pin_callbacks.append(self._get_pin_callback(idx))
 
-        self._base_timer.init(freq=self._BASE_FREQ//self._INTERVAL_US)
+        self._base_timer.init(freq=self._BASE_FREQ // self._INTERVAL_US)
         self._base_timer.callback(lambda t: self._base_callback())
 
     def deinit(self):
@@ -162,6 +165,7 @@ class ServoBrainOld:
             else:
                 self._pins[idx].low()
                 t.deinit()
+
         return func
 
     def _base_callback(self):

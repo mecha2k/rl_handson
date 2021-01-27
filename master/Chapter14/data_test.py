@@ -11,8 +11,9 @@ log = logging.getLogger("data_test")
 if __name__ == "__main__":
     logging.basicConfig(format="%(asctime)-15s %(levelname)s %(message)s", level=logging.INFO)
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", required=True,
-                        help="Category to filter, empty string will use the full dataset")
+    parser.add_argument(
+        "--data", required=True, help="Category to filter, empty string will use the full dataset"
+    )
     parser.add_argument("-m", "--model", required=True, help="Model name to load")
     args = parser.parse_args()
 
@@ -22,7 +23,9 @@ if __name__ == "__main__":
     train_data = data.group_train_data(train_data)
     rev_emb_dict = {idx: word for word, idx in emb_dict.items()}
 
-    net = model.PhraseModel(emb_size=model.EMBEDDING_DIM, dict_size=len(emb_dict), hid_size=model.HIDDEN_STATE_SIZE)
+    net = model.PhraseModel(
+        emb_size=model.EMBEDDING_DIM, dict_size=len(emb_dict), hid_size=model.HIDDEN_STATE_SIZE
+    )
     net.load_state_dict(torch.load(args.model))
 
     end_token = emb_dict[data.END_TOKEN]
@@ -33,8 +36,9 @@ if __name__ == "__main__":
     for seq_1, targets in train_data:
         input_seq = model.pack_input(seq_1, net.emb)
         enc = net.encode(input_seq)
-        _, tokens = net.decode_chain_argmax(enc, input_seq.data[0:1],
-                                            seq_len=data.MAX_TOKENS, stop_at_token=end_token)
+        _, tokens = net.decode_chain_argmax(
+            enc, input_seq.data[0:1], seq_len=data.MAX_TOKENS, stop_at_token=end_token
+        )
         references = [seq[1:] for seq in targets]
         bleu = utils.calc_bleu_many(tokens, references)
         sum_bleu += bleu

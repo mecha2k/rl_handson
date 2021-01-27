@@ -14,8 +14,7 @@ def matmul(a, b):
     res = []
     for r_idx, a_r in enumerate(a):
         res_row = [
-            sum([a_v * b_r[b_idx] for a_v, b_r in zip(a_r, b)])
-            for b_idx in range(len(b[0]))
+            sum([a_v * b_r[b_idx] for a_v, b_r in zip(a_r, b)]) for b_idx in range(len(b[0]))
         ]
         res.append(res_row)
     return res

@@ -69,9 +69,7 @@ def main():
     model.summary()
 
     model.compile(
-        optimizer=optimizers.Adam(lr=0.01),
-        loss="categorical_crossentropy",
-        metrics=["accuracy"],
+        optimizer=optimizers.Adam(lr=0.01), loss="categorical_crossentropy", metrics=["accuracy"],
     )
     writer = SummaryWriter(comment="-cartpole")
 

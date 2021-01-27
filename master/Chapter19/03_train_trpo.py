@@ -28,6 +28,7 @@ TRPO_DAMPING = 0.1
 
 TEST_ITERS = 100000
 
+
 def calc_adv_ref(trajectory, net_crt, states_v, device="cpu"):
     """
     By trajectory calculate advantage and 1-step ref value
@@ -41,8 +42,9 @@ def calc_adv_ref(trajectory, net_crt, states_v, device="cpu"):
     last_gae = 0.0
     result_adv = []
     result_ref = []
-    for val, next_val, (exp,) in zip(reversed(values[:-1]), reversed(values[1:]),
-                                     reversed(trajectory[:-1])):
+    for val, next_val, (exp,) in zip(
+        reversed(values[:-1]), reversed(values[1:]), reversed(trajectory[:-1])
+    ):
         if exp.done:
             delta = exp.reward - val
             last_gae = delta
@@ -59,10 +61,12 @@ def calc_adv_ref(trajectory, net_crt, states_v, device="cpu"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False, action='store_true', help='Enable CUDA')
+    parser.add_argument("--cuda", default=False, action="store_true", help="Enable CUDA")
     parser.add_argument("-n", "--name", required=True, help="Name of the run")
     parser.add_argument("-e", "--env", default=ENV_ID, help="Environment id, default=" + ENV_ID)
-    parser.add_argument("--lr", default=LEARNING_RATE_CRITIC, type=float, help="Critic learning rate")
+    parser.add_argument(
+        "--lr", default=LEARNING_RATE_CRITIC, type=float, help="Critic learning rate"
+    )
     parser.add_argument("--maxkl", default=TRPO_MAX_KL, type=float, help="Maximum KL divergence")
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
@@ -97,8 +101,10 @@ if __name__ == "__main__":
             if step_idx % TEST_ITERS == 0:
                 ts = time.time()
                 rewards, steps = test_net(net_act, test_env, device=device)
-                print("Test done in %.2f sec, reward %.3f, steps %d" % (
-                    time.time() - ts, rewards, steps))
+                print(
+                    "Test done in %.2f sec, reward %.3f, steps %d"
+                    % (time.time() - ts, rewards, steps)
+                )
                 writer.add_scalar("test_reward", rewards, step_idx)
                 writer.add_scalar("test_steps", steps, step_idx)
                 if best_reward is None or best_reward < rewards:
@@ -136,18 +142,16 @@ if __name__ == "__main__":
             # critic step
             opt_crt.zero_grad()
             value_v = net_crt(traj_states_v)
-            loss_value_v = F.mse_loss(
-                value_v.squeeze(-1), traj_ref_v)
+            loss_value_v = F.mse_loss(value_v.squeeze(-1), traj_ref_v)
             loss_value_v.backward()
             opt_crt.step()
 
             # actor step
             def get_loss():
                 mu_v = net_act(traj_states_v)
-                logprob_v = calc_logprob(
-                    mu_v, net_act.logstd, traj_actions_v)
+                logprob_v = calc_logprob(mu_v, net_act.logstd, traj_actions_v)
                 dp_v = torch.exp(logprob_v - old_logprob_v)
-                action_loss_v = -traj_adv_v.unsqueeze(dim=-1)*dp_v
+                action_loss_v = -traj_adv_v.unsqueeze(dim=-1) * dp_v
                 return action_loss_v.mean()
 
             def get_kl():
@@ -157,16 +161,13 @@ if __name__ == "__main__":
                 logstd0_v = logstd_v.detach()
                 std_v = torch.exp(logstd_v)
                 std0_v = std_v.detach()
-                v = (std0_v ** 2 + (mu0_v - mu_v) ** 2) / \
-                    (2.0 * std_v ** 2)
+                v = (std0_v ** 2 + (mu0_v - mu_v) ** 2) / (2.0 * std_v ** 2)
                 kl = logstd_v - logstd0_v + v - 0.5
                 return kl.sum(1, keepdim=True)
 
-            trpo.trpo_step(net_act, get_loss, get_kl, args.maxkl,
-                           TRPO_DAMPING, device=device)
+            trpo.trpo_step(net_act, get_loss, get_kl, args.maxkl, TRPO_DAMPING, device=device)
 
             trajectory.clear()
             writer.add_scalar("advantage", traj_adv_v.mean().item(), step_idx)
             writer.add_scalar("values", traj_ref_v.mean().item(), step_idx)
             writer.add_scalar("loss_value", loss_value_v.item(), step_idx)
-

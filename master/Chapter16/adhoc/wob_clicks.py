@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+
 sys.path.append("..")
 import time
 import gym
@@ -15,7 +16,7 @@ if __name__ == "__main__":
     env = universe.wrappers.experimental.SoftmaxClickMouse(env)
     env = wob_vnc.MiniWoBCropper(env)
 
-    env.configure(remotes='vnc://gpu:5900+15900')
+    env.configure(remotes="vnc://gpu:5900+15900")
     obs = env.reset()
 
     while True:

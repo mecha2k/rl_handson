@@ -23,11 +23,7 @@ class DQN(nn.Module):
     def __init__(self, input_size, n_actions):
         super(DQN, self).__init__()
 
-        self.net = nn.Sequential(
-            nn.Linear(input_size, 128),
-            nn.ReLU(),
-            nn.Linear(128, n_actions)
-        )
+        self.net = nn.Sequential(nn.Linear(input_size, 128), nn.ReLU(), nn.Linear(128, n_actions))
 
     def forward(self, x):
         return self.net(x)
@@ -73,8 +69,7 @@ if __name__ == "__main__":
         batch = replay_buffer.sample(BATCH_SIZE)
         batch_states = [exp.state for exp in batch]
         batch_actions = [exp.action for exp in batch]
-        batch_targets = [calc_target(net, exp.reward, exp.last_state)
-                         for exp in batch]
+        batch_targets = [calc_target(net, exp.reward, exp.last_state) for exp in batch]
         # train
         optimizer.zero_grad()
         states_v = torch.FloatTensor(batch_states)
@@ -93,8 +88,10 @@ if __name__ == "__main__":
             reward = new_rewards[0]
             total_rewards.append(reward)
             mean_rewards = float(np.mean(total_rewards[-100:]))
-            print("%d: reward: %6.2f, mean_100: %6.2f, epsilon: %.2f, episodes: %d" % (
-                step_idx, reward, mean_rewards, selector.epsilon, done_episodes))
+            print(
+                "%d: reward: %6.2f, mean_100: %6.2f, epsilon: %.2f, episodes: %d"
+                % (step_idx, reward, mean_rewards, selector.epsilon, done_episodes)
+            )
             writer.add_scalar("reward", reward, step_idx)
             writer.add_scalar("reward_100", mean_rewards, step_idx)
             writer.add_scalar("epsilon", selector.epsilon, step_idx)

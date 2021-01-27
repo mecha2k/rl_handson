@@ -12,11 +12,13 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", required=True, help="Output file name to produce")
     parser.add_argument("-x", default="Train steps", help="X label")
     parser.add_argument("-y", default="Reward", help="Y label")
-    parser.add_argument("-i", "--input", action='append', help="Input files to process")
-    parser.add_argument("-l", "--legend", action='append', help="Set label for legend")
-    parser.add_argument("--ylog", action='store_true', default=False, help="Set y axis log scale")
-    parser.add_argument("--lloc", default='upper left', help="Sets legend location")
-    parser.add_argument("--max-dt", type=float, default=None, help="Maximum length in hours, default=No limit")
+    parser.add_argument("-i", "--input", action="append", help="Input files to process")
+    parser.add_argument("-l", "--legend", action="append", help="Set label for legend")
+    parser.add_argument("--ylog", action="store_true", default=False, help="Set y axis log scale")
+    parser.add_argument("--lloc", default="upper left", help="Sets legend location")
+    parser.add_argument(
+        "--max-dt", type=float, default=None, help="Maximum length in hours, default=No limit"
+    )
     args = parser.parse_args()
 
     data = []
@@ -27,13 +29,13 @@ if __name__ == "__main__":
         hours = []
         steps = []
         vals = []
-        with open(file_name, 'rt', encoding='utf-8') as fd:
+        with open(file_name, "rt", encoding="utf-8") as fd:
             min_time = None
             for row in csv.DictReader(fd):
                 t = float(row["Wall time"])
                 if min_time is None:
                     min_time = t
-                h = float(t - min_time)/3600
+                h = float(t - min_time) / 3600
                 if args.max_dt is not None and args.max_dt < h:
                     continue
                 hours.append(h)
@@ -47,7 +49,7 @@ if __name__ == "__main__":
         data.append([hours, steps, vals])
 
     x_label = "Hours"
-    if max_hours < 2/60:
+    if max_hours < 2 / 60:
         x_label = "Seconds"
         for hours, _, _ in data:
             for idx, h in enumerate(hours):
@@ -65,10 +67,10 @@ if __name__ == "__main__":
     if not args.legend:
         ax2 = ax1.twiny()
 
-    for (hours, steps, vals), style in zip(data, ('-', ':', '--', '-.')):
-        ax1.plot(hours, vals, color='black', linewidth=.8, linestyle=style)
+    for (hours, steps, vals), style in zip(data, ("-", ":", "--", "-.")):
+        ax1.plot(hours, vals, color="black", linewidth=0.8, linestyle=style)
 
-    ax1.grid(True, axis='both')
+    ax1.grid(True, axis="both")
     if args.legend:
         ax1.legend(args.legend, loc=args.lloc, fancybox=True)
     ax1.set_xlabel(x_label)
@@ -85,16 +87,16 @@ if __name__ == "__main__":
             return ballpark.business(v, precision=3)
 
     if args.ylog:
-        plt.yscale('log')
+        plt.yscale("log")
     if not args.legend:
         ax2.xaxis.set_major_formatter(FuncFormatter(label_formatter))
 
-#    new_tick_locations = np.linspace(0, max_steps, num=10)
+        #    new_tick_locations = np.linspace(0, max_steps, num=10)
 
         ax2.set_xlim(0, max_steps)
-#    ax2.set_xticks(new_tick_locations)
-#    ax2.set_xticklabels(["%.1f" % v for v in new_tick_locations])
+        #    ax2.set_xticks(new_tick_locations)
+        #    ax2.set_xticklabels(["%.1f" % v for v in new_tick_locations])
         ax2.set_xlabel(args.x)
-        ax2.grid(True, axis='y')
+        ax2.grid(True, axis="y")
     plt.savefig(args.output)
 #    plt.show()
