@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 from tensorboardX import SummaryWriter
 
-from lib import wob_vnc, model_vnc, common, vnc_demo
+from libc import wob_vnc, model_vnc, common, vnc_demo
 
 import ptan
 

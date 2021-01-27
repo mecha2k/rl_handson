@@ -13,7 +13,7 @@ import torch.nn.utils as nn_utils
 import torch.nn.functional as F
 import torch.optim as optim
 
-from lib import common
+from libc import common
 
 GAMMA = 0.99
 LEARNING_RATE = 5e-4

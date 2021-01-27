@@ -12,7 +12,7 @@ import numpy as np
 import configparser
 import argparse
 
-from lib import game, model, mcts
+from libc import game, model, mcts
 
 MCTS_SEARCHES = 20
 MCTS_BATCH_SIZE = 4

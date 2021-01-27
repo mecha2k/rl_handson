@@ -9,7 +9,7 @@ import argparse
 from tensorboardX import SummaryWriter
 import numpy as np
 
-from lib import model, common, test_net
+from libc import model, common, test_net
 
 import torch
 import torch.optim as optim

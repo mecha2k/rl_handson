@@ -8,7 +8,7 @@ import pybullet_envs
 import argparse
 from tensorboardX import SummaryWriter
 
-from lib import model, common
+from libc import model, common
 
 import numpy as np
 import torch

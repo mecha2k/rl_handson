@@ -10,7 +10,7 @@ import warnings
 from textworld.gym import register_games
 from textworld import EnvInfos
 
-from lib import preproc, model, common
+from libc import preproc, model, common
 
 import torch
 import torch.optim as optim

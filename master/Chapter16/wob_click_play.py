@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from lib import wob_vnc, model_vnc
+from libc import wob_vnc, model_vnc
 
 
 ENV_NAME = "wob.mini.ClickDialog-v0"

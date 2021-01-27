@@ -5,7 +5,7 @@ import time
 import argparse
 import torch
 
-from lib import microtaur, ddpg
+from libc import microtaur, ddpg
 
 OBS_HISTORY_STEPS = 4
 

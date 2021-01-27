@@ -3,7 +3,7 @@ import sys
 import time
 import argparse
 
-from lib import game, model
+from libc import game, model
 
 import torch
 

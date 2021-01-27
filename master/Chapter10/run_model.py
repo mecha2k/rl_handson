@@ -2,7 +2,7 @@
 import argparse
 import numpy as np
 
-from lib import environ, data, models
+from libc import environ, data, models
 
 import torch
 

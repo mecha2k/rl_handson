@@ -12,7 +12,7 @@ from tensorboardX import SummaryWriter
 
 import os
 
-from lib import microtaur, ddpg
+from libc import microtaur, ddpg
 
 
 TIME_LIMIT = 1000

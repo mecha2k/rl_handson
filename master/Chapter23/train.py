@@ -6,7 +6,7 @@ import random
 import argparse
 import collections
 
-from lib import game, model, mcts
+from libc import game, model, mcts
 
 from tensorboardX import SummaryWriter
 

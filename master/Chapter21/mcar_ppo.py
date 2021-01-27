@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 from ignite.engine import Engine
 from types import SimpleNamespace
-from lib import common, ppo
+from libc import common, ppo
 
 
 HYPERPARAMS = {

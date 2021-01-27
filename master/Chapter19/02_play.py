@@ -4,7 +4,7 @@ import gym
 from gym import wrappers
 import pybullet_envs
 
-from lib import model, kfac
+from libc import model, kfac
 from PIL import Image
 
 import numpy as np

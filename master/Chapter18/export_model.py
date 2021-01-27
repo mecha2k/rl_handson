@@ -6,7 +6,7 @@ import pathlib
 import argparse
 import torch
 import torch.nn as nn
-from lib import ddpg
+from libc import ddpg
 
 DEFAULT_INPUT_DIM = 28
 ACTIONS_DIM = 4

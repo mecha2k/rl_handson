@@ -5,7 +5,7 @@ import time
 import gym
 import argparse
 
-from lib import common, i2a
+from libc import common, i2a
 
 import torch.optim as optim
 import torch

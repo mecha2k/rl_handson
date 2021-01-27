@@ -8,7 +8,7 @@ from tensorboardX import SummaryWriter
 import torch
 import torch.optim as optim
 
-from lib import common
+from libc import common
 
 
 LEARNING_RATE = 1e-4

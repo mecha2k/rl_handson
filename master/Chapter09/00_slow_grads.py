@@ -15,7 +15,7 @@ from ignite.engine import Engine
 from ignite.metrics import RunningAverage
 from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
-from lib import dqn_model, common
+from libc import dqn_model, common
 
 NAME = "00_slow_grads"
 

@@ -10,7 +10,7 @@ import torch.optim as optim
 from types import SimpleNamespace
 from ignite.engine import Engine
 
-from lib import common, dqn_extra, atari_wrappers
+from libc import common, dqn_extra, atari_wrappers
 
 STATES_TO_EVALUATE = 1000
 EVAL_EVERY_FRAME = 10000

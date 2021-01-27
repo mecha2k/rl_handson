@@ -8,7 +8,7 @@ import magent
 import argparse
 import torch
 import numpy as np
-from lib import model, data
+from libc import model, data
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from lib import common, i2a
+from libc import common, i2a
 
 
 LEARNING_RATE = 5e-4

@@ -13,7 +13,7 @@ import ptan.ignite as ptan_ignite
 
 from torch import optim
 from types import SimpleNamespace
-from lib import data, model, common
+from libc import data, model, common
 from ignite.engine import Engine
 
 

@@ -8,7 +8,7 @@ import pybullet_envs
 import argparse
 from tensorboardX import SummaryWriter
 
-from lib import model, test_net, calc_logprob
+from libc import model, test_net, calc_logprob
 
 import numpy as np
 import torch

@@ -4,7 +4,7 @@ import gym
 import argparse
 import numpy as np
 
-from lib import common
+from libc import common
 
 import torch
 import torch.nn.functional as F

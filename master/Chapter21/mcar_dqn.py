@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 from ignite.engine import Engine
 
-from lib import common, dqn_extra
+from libc import common, dqn_extra
 
 
 HYPERPARAMS = {
