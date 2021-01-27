@@ -9,9 +9,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from tensorboardX import SummaryWriter
-
-
 Experience = collections.namedtuple(
     "Experience", field_names=["state", "action", "reward", "done", "new_state"]
 )
@@ -76,7 +73,7 @@ class Agent:
         return done_reward
 
 
-def calc_loss(batch, net, tgt_net, device="cpu"):
+def calc_loss(batch, net, tgt_net, device="cpu", gamma=0.99):
     states, actions, rewards, dones, next_states = batch
 
     states_v = torch.tensor(np.array(states, copy=False)).to(device)
@@ -91,7 +88,7 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
         next_state_values[done_mask] = 0.0
         next_state_values = next_state_values.detach()
 
-    expected_state_action_values = next_state_values * GAMMA + rewards_v
+    expected_state_action_values = next_state_values * gamma + rewards_v
     return nn.MSELoss()(state_action_values, expected_state_action_values)
 
 
@@ -109,7 +106,7 @@ def main():
     learning_rate = 1e-4
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=True, action="store_true", help="Enable cuda")
+    parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
     parser.add_argument(
         "--env",
         default=DEFAULT_ENV_NAME,
@@ -122,12 +119,10 @@ def main():
 
     net = dqn_model.DQN(env.observation_space.shape, env.action_space.n).to(device)
     tgt_net = dqn_model.DQN(env.observation_space.shape, env.action_space.n).to(device)
-    writer = SummaryWriter(comment="-" + args.env)
     print(net)
 
     buffer = ExperienceBuffer(replay_size)
     agent = Agent(env, buffer)
-    epsilon = eps_start
 
     optimizer = optim.Adam(net.parameters(), lr=learning_rate)
     total_rewards = []
@@ -148,18 +143,15 @@ def main():
             ts = time.time()
             m_reward = np.mean(total_rewards[-100:])
             print(
-                "%d: done %d games, reward %.3f, "
-                "eps %.2f, speed %.2f f/s"
-                % (frame_idx, len(total_rewards), m_reward, epsilon, speed)
+                "{:d}: done {:d} games, reward {:.3f}, "
+                "eps {:.2f}, speed {:.2f} f/s".format(
+                    frame_idx, len(total_rewards), m_reward, epsilon, speed
+                )
             )
-            writer.add_scalar("epsilon", epsilon, frame_idx)
-            writer.add_scalar("speed", speed, frame_idx)
-            writer.add_scalar("reward_100", m_reward, frame_idx)
-            writer.add_scalar("reward", reward, frame_idx)
             if best_m_reward is None or best_m_reward < m_reward:
                 torch.save(net.state_dict(), args.env + "-best_%.0f.dat" % m_reward)
                 if best_m_reward is not None:
-                    print("Best reward updated %.3f -> %.3f" % (best_m_reward, m_reward))
+                    print(f"Best reward updated {best_m_reward:.3f} -> {m_reward:.3f}")
                 best_m_reward = m_reward
             if m_reward > MEAN_REWARD_BOUND:
                 print("Solved in %d frames!" % frame_idx)
@@ -176,7 +168,6 @@ def main():
         loss_t = calc_loss(batch, net, tgt_net, device=device)
         loss_t.backward()
         optimizer.step()
-    writer.close()
 
 
 if __name__ == "__main__":
