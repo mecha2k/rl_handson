@@ -21,20 +21,24 @@ POPULATION_SIZE = 2000
 PARENTS_COUNT = 10
 WORKERS_COUNT = 2
 SEEDS_PER_WORKER = POPULATION_SIZE // WORKERS_COUNT
-MAX_SEED = 2**32 - 1
+MAX_SEED = 2 ** 32 - 1
 
 
 class MultiNoiseLinear(nn.Linear):
     def set_noise_dim(self, dim):
         assert isinstance(dim, int)
         assert dim > 0
-        self.register_buffer('noise', torch.FloatTensor(dim, self.out_features, self.in_features))
-        self.register_buffer('noise_bias', torch.FloatTensor(dim, self.out_features))
+        self.register_buffer("noise", torch.FloatTensor(dim, self.out_features, self.in_features))
+        self.register_buffer("noise_bias", torch.FloatTensor(dim, self.out_features))
 
     def sample_noise_row(self, row):
         # sample noise for our params
-        w_noise = NOISE_STD * torch.tensor(np.random.normal(size=self.weight.data.size()).astype(np.float32))
-        b_noise = NOISE_STD * torch.tensor(np.random.normal(size=self.bias.data.size()).astype(np.float32))
+        w_noise = NOISE_STD * torch.tensor(
+            np.random.normal(size=self.weight.data.size()).astype(np.float32)
+        )
+        b_noise = NOISE_STD * torch.tensor(
+            np.random.normal(size=self.bias.data.size()).astype(np.float32)
+        )
         self.noise[row].copy_(w_noise)
         self.noise_bias[row].copy_(b_noise)
 
@@ -140,7 +144,7 @@ def build_net(env, seeds):
     return net
 
 
-OutputItem = collections.namedtuple('OutputItem', field_names=['seeds', 'reward', 'steps'])
+OutputItem = collections.namedtuple("OutputItem", field_names=["seeds", "reward", "steps"])
 
 
 def worker_func(input_queue, output_queue, device="cpu"):
@@ -173,9 +177,9 @@ def worker_func(input_queue, output_queue, device="cpu"):
 
 
 if __name__ == "__main__":
-    mp.set_start_method('spawn')
+    mp.set_start_method("spawn")
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False, action='store_true')
+    parser.add_argument("--cuda", default=False, action="store_true")
     args = parser.parse_args()
     writer = SummaryWriter(comment="-cheetah-ga-batch")
     device = "cuda" if args.cuda else "cpu"
@@ -215,8 +219,10 @@ if __name__ == "__main__":
         writer.add_scalar("gen_seconds", time.time() - t_start, gen_idx)
         speed = batch_steps / (time.time() - t_start)
         writer.add_scalar("speed", speed, gen_idx)
-        print("%d: reward_mean=%.2f, reward_max=%.2f, reward_std=%.2f, speed=%.2f f/s" % (
-            gen_idx, reward_mean, reward_max, reward_std, speed))
+        print(
+            "%d: reward_mean=%.2f, reward_max=%.2f, reward_std=%.2f, speed=%.2f f/s"
+            % (gen_idx, reward_mean, reward_max, reward_std, speed)
+        )
 
         elite = population[0]
         for worker_queue in input_queues:

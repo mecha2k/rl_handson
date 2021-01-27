@@ -8,17 +8,22 @@ from . import _env
 from . import _common
 
 # environment API
-State = collections.namedtuple("State", field_names=[
-    'corner_pos', 'side_pos', 'corner_ort', 'side_ort'])
+State = collections.namedtuple(
+    "State", field_names=["corner_pos", "side_pos", "corner_ort", "side_ort"]
+)
 
 # rendered state -- list of colors of every side
-RenderedState = collections.namedtuple("RenderedState", field_names=['top', 'front', 'left', 'right', 'back', 'bottom'])
+RenderedState = collections.namedtuple(
+    "RenderedState", field_names=["top", "front", "left", "right", "back", "bottom"]
+)
 
 # initial (solved state)
-initial_state = State(corner_pos=tuple(range(8)),
-                      side_pos=tuple(range(12)),
-                      corner_ort=tuple([0]*8),
-                      side_ort=tuple([0]*12))
+initial_state = State(
+    corner_pos=tuple(range(8)),
+    side_pos=tuple(range(12)),
+    corner_ort=tuple([0] * 8),
+    side_ort=tuple([0] * 12),
+)
 
 
 def is_initial(state):
@@ -27,10 +32,12 @@ def is_initial(state):
     :param state: State instance
     :return: True if state match initial, False otherwise
     """
-    return state.corner_pos == initial_state.corner_pos and \
-           state.side_pos == initial_state.side_pos and \
-           state.corner_ort == initial_state.corner_ort and \
-           state.side_ort == initial_state.side_ort
+    return (
+        state.corner_pos == initial_state.corner_pos
+        and state.side_pos == initial_state.side_pos
+        and state.corner_ort == initial_state.corner_ort
+        and state.side_ort == initial_state.side_ort
+    )
 
 
 # available actions. Capital actions denote clockwise rotation
@@ -61,7 +68,7 @@ _inverse_action = {
     Action.F: Action.f,
     Action.f: Action.F,
     Action.B: Action.b,
-    Action.b: Action.B
+    Action.b: Action.B,
 }
 
 
@@ -71,49 +78,36 @@ def inverse_action(action):
 
 
 def _flip(side_ort, sides):
-    return [
-        o if idx not in sides else 1-o
-        for idx, o in enumerate(side_ort)
-    ]
+    return [o if idx not in sides else 1 - o for idx, o in enumerate(side_ort)]
 
 
 _transform_map = {
     Action.R: [
-        ((1, 2), (2, 6), (6, 5), (5, 1)),           # corner map
-        ((1, 6), (6, 9), (9, 5), (5, 1)),           # side map
-        ((1, 2), (2, 1), (5, 1), (6, 2)),           # corner rotate
-        ()                                          # side flip
+        ((1, 2), (2, 6), (6, 5), (5, 1)),  # corner map
+        ((1, 6), (6, 9), (9, 5), (5, 1)),  # side map
+        ((1, 2), (2, 1), (5, 1), (6, 2)),  # corner rotate
+        (),  # side flip
     ],
     Action.L: [
         ((3, 0), (7, 3), (0, 4), (4, 7)),
         ((7, 3), (3, 4), (11, 7), (4, 11)),
         ((0, 1), (3, 2), (4, 2), (7, 1)),
-        ()
-    ],
-    Action.T: [
-        ((0, 3), (1, 0), (2, 1), (3, 2)),
-        ((0, 3), (1, 0), (2, 1), (3, 2)),
         (),
-        ()
     ],
-    Action.D: [
-        ((4, 5), (5,  6), (6, 7), (7, 4)),
-        ((8, 9), (9, 10), (10, 11), (11, 8)),
-        (),
-        ()
-    ],
+    Action.T: [((0, 3), (1, 0), (2, 1), (3, 2)), ((0, 3), (1, 0), (2, 1), (3, 2)), (), ()],
+    Action.D: [((4, 5), (5, 6), (6, 7), (7, 4)), ((8, 9), (9, 10), (10, 11), (11, 8)), (), ()],
     Action.F: [
         ((0, 1), (1, 5), (5, 4), (4, 0)),
         ((0, 5), (4, 0), (5, 8), (8, 4)),
         ((0, 2), (1, 1), (4, 1), (5, 2)),
-        (0, 4, 5, 8)
+        (0, 4, 5, 8),
     ],
     Action.B: [
         ((2, 3), (3, 7), (7, 6), (6, 2)),
         ((2, 7), (6, 2), (7, 10), (10, 6)),
         ((2, 2), (3, 1), (6, 1), (7, 2)),
-        (2, 6, 7, 10)
-    ]
+        (2, 6, 7, 10),
+    ],
 }
 
 
@@ -134,8 +128,12 @@ def transform(state, action):
     if s_flp:
         side_ort = _common._permute(side_ort, s_map, is_inv)
         side_ort = _flip(side_ort, s_flp)
-    return State(corner_pos=tuple(corner_pos), corner_ort=tuple(corner_ort),
-                 side_pos=tuple(side_pos), side_ort=tuple(side_ort))
+    return State(
+        corner_pos=tuple(corner_pos),
+        corner_ort=tuple(corner_ort),
+        side_pos=tuple(side_pos),
+        side_ort=tuple(side_ort),
+    )
 
 
 # make initial state of rendered side
@@ -146,26 +144,41 @@ def _init_side(color):
 # create initial sides in the right order
 def _init_sides():
     return [
-        _init_side('W'),    # top
-        _init_side('G'),    # left
-        _init_side('O'),    # back
-        _init_side('R'),    # front
-        _init_side('B'),    # right
-        _init_side('Y')     # bottom
+        _init_side("W"),  # top
+        _init_side("G"),  # left
+        _init_side("O"),  # back
+        _init_side("R"),  # front
+        _init_side("B"),  # right
+        _init_side("Y"),  # bottom
     ]
 
 
 # corner cubelets colors (clockwise from main label). Order of cubelets are first top,
 # in counter-clockwise, started from front left
 corner_colors = (
-    ('W', 'R', 'G'), ('W', 'B', 'R'), ('W', 'O', 'B'), ('W', 'G', 'O'),
-    ('Y', 'G', 'R'), ('Y', 'R', 'B'), ('Y', 'B', 'O'), ('Y', 'O', 'G')
+    ("W", "R", "G"),
+    ("W", "B", "R"),
+    ("W", "O", "B"),
+    ("W", "G", "O"),
+    ("Y", "G", "R"),
+    ("Y", "R", "B"),
+    ("Y", "B", "O"),
+    ("Y", "O", "G"),
 )
 
 side_colors = (
-    ('W', 'R'), ('W', 'B'), ('W', 'O'), ('W', 'G'),
-    ('R', 'G'), ('R', 'B'), ('O', 'B'), ('O', 'G'),
-    ('Y', 'R'), ('Y', 'B'), ('Y', 'O'), ('Y', 'G')
+    ("W", "R"),
+    ("W", "B"),
+    ("W", "O"),
+    ("W", "G"),
+    ("R", "G"),
+    ("R", "B"),
+    ("O", "B"),
+    ("O", "G"),
+    ("Y", "R"),
+    ("Y", "B"),
+    ("Y", "O"),
+    ("Y", "G"),
 )
 
 
@@ -181,7 +194,7 @@ corner_maps = (
     ((5, 0), (1, 8), (3, 6)),
     ((5, 2), (3, 8), (4, 6)),
     ((5, 8), (4, 8), (2, 6)),
-    ((5, 6), (2, 8), (1, 6))
+    ((5, 6), (2, 8), (1, 6)),
 )
 
 # map every 2-side cubelet to their projection on sides
@@ -200,7 +213,7 @@ side_maps = (
     ((5, 1), (3, 7)),
     ((5, 5), (4, 7)),
     ((5, 7), (2, 7)),
-    ((5, 3), (1, 7))
+    ((5, 3), (1, 7)),
 )
 
 
@@ -223,8 +236,9 @@ def render(state):
         for (arr_idx, index), col in zip(maps, cols):
             sides[arr_idx][index] = col
 
-    return RenderedState(top=sides[0], left=sides[1], back=sides[2], front=sides[3],
-                         right=sides[4], bottom=sides[5])
+    return RenderedState(
+        top=sides[0], left=sides[1], back=sides[2], front=sides[3], right=sides[4], bottom=sides[5]
+    )
 
 
 # shape of encoded cube state
@@ -254,7 +268,17 @@ def encode_inplace(target, state):
 
 
 # register env
-_env.register(_env.CubeEnv(name="cube3x3", state_type=State, initial_state=initial_state,
-                           is_goal_pred=is_initial, action_enum=Action,
-                           transform_func=transform, inverse_action_func=inverse_action,
-                           render_func=render, encoded_shape=encoded_shape, encode_func=encode_inplace))
+_env.register(
+    _env.CubeEnv(
+        name="cube3x3",
+        state_type=State,
+        initial_state=initial_state,
+        is_goal_pred=is_initial,
+        action_enum=Action,
+        transform_func=transform,
+        inverse_action_func=inverse_action,
+        render_func=render,
+        encoded_shape=encoded_shape,
+        encode_func=encode_inplace,
+    )
+)

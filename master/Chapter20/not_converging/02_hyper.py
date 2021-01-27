@@ -15,6 +15,16 @@ if __name__ == "__main__":
         std = 10 ** std_exp
         print(lr_exp, std_exp)
         print(lr, std)
-        res = subprocess.run(["./02_breakout_es.py", "--cuda", "--lr", str(lr), '--noise-std', str(std),
-                              "--iters", str(ITERS)])
+        res = subprocess.run(
+            [
+                "./02_breakout_es.py",
+                "--cuda",
+                "--lr",
+                str(lr),
+                "--noise-std",
+                str(std),
+                "--iters",
+                str(ITERS),
+            ]
+        )
     pass

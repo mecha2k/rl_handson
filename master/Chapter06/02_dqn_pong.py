@@ -1,5 +1,4 @@
-from lib import wrappers
-from lib import dqn_model
+from master.Chapter06.libc import dqn_model, wrappers
 
 import argparse
 import time
@@ -11,21 +10,6 @@ import torch.nn as nn
 import torch.optim as optim
 
 from tensorboardX import SummaryWriter
-
-
-DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
-MEAN_REWARD_BOUND = 19
-
-GAMMA = 0.99
-BATCH_SIZE = 32
-REPLAY_SIZE = 10000
-LEARNING_RATE = 1e-4
-SYNC_TARGET_FRAMES = 1000
-REPLAY_START_SIZE = 10000
-
-EPSILON_DECAY_LAST_FRAME = 150000
-EPSILON_START = 1.0
-EPSILON_FINAL = 0.01
 
 
 Experience = collections.namedtuple(
@@ -59,6 +43,7 @@ class Agent:
     def __init__(self, env, exp_buffer):
         self.env = env
         self.exp_buffer = exp_buffer
+        self.state = None
         self._reset()
 
     def _reset(self):
@@ -70,7 +55,7 @@ class Agent:
         done_reward = None
 
         if np.random.random() < epsilon:
-            action = env.action_space.sample()
+            action = self.env.action_space.sample()
         else:
             state_a = np.array([self.state], copy=False)
             state_v = torch.tensor(state_a).to(device)
@@ -111,8 +96,20 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
 
 
 def main():
+    DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
+    MEAN_REWARD_BOUND = 19
+
+    batch_size = 32
+    sync_target_frames = 1000
+    eps_decay_last_frame = 150000
+    eps_start = 1.0
+    eps_final = 0.01
+    replay_size = 10000
+    replay_start_size = 10000
+    learning_rate = 1e-4
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
+    parser.add_argument("--cuda", default=True, action="store_true", help="Enable cuda")
     parser.add_argument(
         "--env",
         default=DEFAULT_ENV_NAME,
@@ -128,11 +125,11 @@ def main():
     writer = SummaryWriter(comment="-" + args.env)
     print(net)
 
-    buffer = ExperienceBuffer(REPLAY_SIZE)
+    buffer = ExperienceBuffer(replay_size)
     agent = Agent(env, buffer)
-    epsilon = EPSILON_START
+    epsilon = eps_start
 
-    optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
+    optimizer = optim.Adam(net.parameters(), lr=learning_rate)
     total_rewards = []
     frame_idx = 0
     ts_frame = 0
@@ -141,7 +138,7 @@ def main():
 
     while True:
         frame_idx += 1
-        epsilon = max(EPSILON_FINAL, EPSILON_START - frame_idx / EPSILON_DECAY_LAST_FRAME)
+        epsilon = max(eps_final, eps_start - frame_idx / eps_decay_last_frame)
 
         reward = agent.play_step(net, epsilon, device=device)
         if reward is not None:
@@ -168,14 +165,14 @@ def main():
                 print("Solved in %d frames!" % frame_idx)
                 break
 
-        if len(buffer) < REPLAY_START_SIZE:
+        if len(buffer) < replay_start_size:
             continue
 
-        if frame_idx % SYNC_TARGET_FRAMES == 0:
+        if frame_idx % sync_target_frames == 0:
             tgt_net.load_state_dict(net.state_dict())
 
         optimizer.zero_grad()
-        batch = buffer.sample(BATCH_SIZE)
+        batch = buffer.sample(batch_size)
         loss_t = calc_loss(batch, net, tgt_net, device=device)
         loss_t.backward()
         optimizer.step()

@@ -181,9 +181,7 @@ def iterate_batches(envs, batch_size=BATCH_SIZE):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--cuda", default=False, action="store_true", help="Enable cuda computation"
-    )
+    parser.add_argument("--cuda", default=True, action="store_true", help="Enable cuda computation")
     args = parser.parse_args()
 
     device = torch.device("cuda" if args.cuda else "cpu")

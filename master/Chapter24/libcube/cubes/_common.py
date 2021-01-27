@@ -29,4 +29,3 @@ def _map_orient(cols, orient_id):
         return cols[2], cols[0], cols[1]
     else:
         return cols[1], cols[2], cols[0]
-

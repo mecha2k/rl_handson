@@ -15,21 +15,10 @@ class Net(nn.Module):
 
         self.input_size = int(np.prod(input_shape))
         self.body = nn.Sequential(
-            nn.Linear(self.input_size, 4096),
-            nn.ELU(),
-            nn.Linear(4096, 2048),
-            nn.ELU()
+            nn.Linear(self.input_size, 4096), nn.ELU(), nn.Linear(4096, 2048), nn.ELU()
         )
-        self.policy = nn.Sequential(
-            nn.Linear(2048, 512),
-            nn.ELU(),
-            nn.Linear(512, actions_count)
-        )
-        self.value = nn.Sequential(
-            nn.Linear(2048, 512),
-            nn.ELU(),
-            nn.Linear(512, 1)
-        )
+        self.policy = nn.Sequential(nn.Linear(2048, 512), nn.ELU(), nn.Linear(512, actions_count))
+        self.value = nn.Sequential(nn.Linear(2048, 512), nn.ELU(), nn.Linear(512, 1))
 
     def forward(self, batch, value_only=False):
         x = batch.view((-1, self.input_size))
@@ -53,7 +42,7 @@ def encode_states(cube_env, states):
             for j, state in enumerate(st_list):
                 cube_env.encode_inplace(encoded[i, j], state)
     else:
-        encoded = np.zeros((len(states), ) + cube_env.encoded_shape, dtype=np.float32)
+        encoded = np.zeros((len(states),) + cube_env.encoded_shape, dtype=np.float32)
         for i, state in enumerate(states):
             cube_env.encode_inplace(encoded[i], state)
 
@@ -62,9 +51,9 @@ def encode_states(cube_env, states):
 
 class ValueTargetsMethod(enum.Enum):
     # method from the paper
-    Paper = 'paper'
+    Paper = "paper"
     # paper, but value of goal state equals zero
-    ZeroGoalValue = 'zero_goal_value'
+    ZeroGoalValue = "zero_goal_value"
 
 
 def make_scramble_buffer(cube_env, buf_size, scramble_depth):
@@ -107,13 +96,15 @@ def sample_batch(scramble_buffer, net, device, batch_size, value_targets):
     explored_states = np.stack(explored_states)
     shape = explored_states.shape
     explored_states_t = torch.tensor(explored_states).to(device)
-    explored_states_t = explored_states_t.view(shape[0]*shape[1], *shape[2:])     # shape: (states*actions, encoded_shape)
+    explored_states_t = explored_states_t.view(
+        shape[0] * shape[1], *shape[2:]
+    )  # shape: (states*actions, encoded_shape)
     value_t = net(explored_states_t, value_only=True)
-    value_t = value_t.squeeze(-1).view(shape[0], shape[1])                  # shape: (states, actions)
+    value_t = value_t.squeeze(-1).view(shape[0], shape[1])  # shape: (states, actions)
     if value_targets == ValueTargetsMethod.Paper:
         # add reward to the values
         goals_mask_t = torch.tensor(explored_goals, dtype=torch.int8).to(device)
-        goals_mask_t += goals_mask_t - 1                                        # has 1 at final states and -1 elsewhere
+        goals_mask_t += goals_mask_t - 1  # has 1 at final states and -1 elsewhere
         value_t += goals_mask_t.type(dtype=torch.float32)
         # find target value and target policy
         max_val_t, max_act_t = value_t.max(dim=1)
@@ -130,12 +121,19 @@ def sample_batch(scramble_buffer, net, device, batch_size, value_targets):
     enc_input = np.stack(states)
     enc_input_t = torch.tensor(enc_input).to(device)
     depths_t = torch.tensor(depths, dtype=torch.float32).to(device)
-    weights_t = 1/depths_t
+    weights_t = 1 / depths_t
     return enc_input_t.detach(), weights_t.detach(), max_act_t.detach(), max_val_t.detach()
 
 
-def make_train_data(cube_env, net, device, batch_size, scramble_depth, shuffle=False,
-                    value_targets=ValueTargetsMethod.Paper):
+def make_train_data(
+    cube_env,
+    net,
+    device,
+    batch_size,
+    scramble_depth,
+    shuffle=False,
+    value_targets=ValueTargetsMethod.Paper,
+):
     assert isinstance(cube_env, cubes.CubeEnv)
     assert isinstance(value_targets, ValueTargetsMethod)
 
@@ -159,17 +157,21 @@ def make_train_data(cube_env, net, device, batch_size, scramble_depth, shuffle=F
             goal_indices.append(idx)
 
     # obtain network's values for all explored states
-    enc_explored = encode_states(cube_env, explored_states)           # shape: (states, actions, encoded_shape)
+    enc_explored = encode_states(
+        cube_env, explored_states
+    )  # shape: (states, actions, encoded_shape)
 
     shape = enc_explored.shape
     enc_explored_t = torch.tensor(enc_explored).to(device)
-    enc_explored_t = enc_explored_t.view(shape[0]*shape[1], *shape[2:])     # shape: (states*actions, encoded_shape)
+    enc_explored_t = enc_explored_t.view(
+        shape[0] * shape[1], *shape[2:]
+    )  # shape: (states*actions, encoded_shape)
     value_t = net(enc_explored_t, value_only=True)
-    value_t = value_t.squeeze(-1).view(shape[0], shape[1])                  # shape: (states, actions)
+    value_t = value_t.squeeze(-1).view(shape[0], shape[1])  # shape: (states, actions)
     if value_targets == ValueTargetsMethod.Paper:
         # add reward to the values
         goals_mask_t = torch.tensor(explored_goals, dtype=torch.int8).to(device)
-        goals_mask_t += goals_mask_t - 1                                        # has 1 at final states and -1 elsewhere
+        goals_mask_t += goals_mask_t - 1  # has 1 at final states and -1 elsewhere
         value_t += goals_mask_t.type(dtype=torch.float32)
         # find target value and target policy
         max_val_t, max_act_t = value_t.max(dim=1)
@@ -185,5 +187,5 @@ def make_train_data(cube_env, net, device, batch_size, scramble_depth, shuffle=F
     enc_input = encode_states(cube_env, cube_states)
     enc_input_t = torch.tensor(enc_input).to(device)
     cube_depths_t = torch.tensor(cube_depths, dtype=torch.float32).to(device)
-    weights_t = 1/cube_depths_t
+    weights_t = 1 / cube_depths_t
     return enc_input_t.detach(), weights_t.detach(), max_act_t.detach(), max_val_t.detach()

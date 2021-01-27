@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import torch.nn.utils as nn_utils
 import torch.optim as optim
 
-from lib import common
+from libc import common
 
 GAMMA = 0.99
 LEARNING_RATE = 0.0001
@@ -50,7 +50,7 @@ class MeanBuffer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
-    parser.add_argument("-n", '--name', required=True, help="Name of the run")
+    parser.add_argument("-n", "--name", required=True, help="Name of the run")
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
 
@@ -61,7 +61,9 @@ if __name__ == "__main__":
     print(net)
 
     agent = ptan.agent.PolicyAgent(net, apply_softmax=True, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(
+        envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS
+    )
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE, eps=1e-3)
 

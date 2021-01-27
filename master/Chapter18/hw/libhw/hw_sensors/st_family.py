@@ -28,8 +28,9 @@ class STSensor(sensors.Sensor):
         # check the device whoami
         val = self._read_reg_u8(self.WHOAMI_REG)
         if val != whoami_val:
-            raise sensors.SensorInitError("Wrong value in WHOAMI register, expected %x, found %x",
-                                          whoami_val, val)
+            raise sensors.SensorInitError(
+                "Wrong value in WHOAMI register, expected %x, found %x", whoami_val, val
+            )
 
     # warning: read functions are not ISR-safe!
     def _read_reg_u8(self, reg_addr):
@@ -37,7 +38,7 @@ class STSensor(sensors.Sensor):
 
     def _read_reg_u16(self, reg):
         l = self._read_reg_u8(reg)
-        h = self._read_reg_u8(reg+1)
+        h = self._read_reg_u8(reg + 1)
         return h * 256 + l
 
     def _read_reg_s16(self, reg):
@@ -52,7 +53,7 @@ class STSensor(sensors.Sensor):
 #   read-a-twos-complement-16bit-into-a-signed-decimal
 def twosComp(x):
     if 0x8000 & x:
-        x = - (0x010000 - x)
+        x = -(0x010000 - x)
     return x
 
 

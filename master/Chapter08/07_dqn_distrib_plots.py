@@ -16,8 +16,8 @@ from ignite.engine import Engine
 from ignite.metrics import RunningAverage
 from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
-import lib.dqn_extra
-from lib import dqn_model, common
+import libc.dqn_extra
+from libc import dqn_model, common
 
 NAME = "07_distrib"
 
@@ -27,6 +27,7 @@ SAVE_TRANSITIONS_IMG = True
 
 if SAVE_STATES_IMG or SAVE_TRANSITIONS_IMG:
     import matplotlib as mpl
+
     mpl.use("Agg")
     import matplotlib.pylab as plt
 
@@ -49,17 +50,15 @@ class DistributionalDQN(nn.Module):
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         conv_out_size = self._get_conv_out(input_shape)
         self.fc = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
-            nn.ReLU(),
-            nn.Linear(512, n_actions * N_ATOMS)
+            nn.Linear(conv_out_size, 512), nn.ReLU(), nn.Linear(512, n_actions * N_ATOMS)
         )
 
-        self.register_buffer("supports", torch.arange(Vmin, Vmax+DELTA_Z, DELTA_Z))
+        self.register_buffer("supports", torch.arange(Vmin, Vmax + DELTA_Z, DELTA_Z))
         self.softmax = nn.Softmax(dim=1)
 
     def _get_conv_out(self, shape):
@@ -107,7 +106,7 @@ def save_state_images(frame_idx, states, net, device="cpu", max_states=200):
         for batch_idx in range(batch_size):
             plt.clf()
             for action_idx in range(num_actions):
-                plt.subplot(num_actions, 1, action_idx+1)
+                plt.subplot(num_actions, 1, action_idx + 1)
                 plt.bar(p, action_prob[batch_idx, action_idx], width=0.5)
             plt.savefig("states/%05d_%08d.png" % (ofs + batch_idx, frame_idx))
         ofs += batch_size
@@ -115,7 +114,9 @@ def save_state_images(frame_idx, states, net, device="cpu", max_states=200):
             break
 
 
-def save_transition_images(batch_size, predicted, projected, next_distr, dones, rewards, save_prefix):
+def save_transition_images(
+    batch_size, predicted, projected, next_distr, dones, rewards, save_prefix
+):
     for batch_idx in range(batch_size):
         is_done = dones[batch_idx]
         reward = rewards[batch_idx]
@@ -155,7 +156,9 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
     dones = dones.astype(np.bool)
 
     # project our distribution using Bellman update
-    proj_distr = lib.dqn_extra.distr_projection(next_best_distr, rewards, dones, Vmin, Vmax, N_ATOMS, gamma)
+    proj_distr = libc.dqn_extra.distr_projection(
+        next_best_distr, rewards, dones, Vmin, Vmax, N_ATOMS, gamma
+    )
 
     # calculate net output
     distr_v = net(states_v)
@@ -165,7 +168,9 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
 
     if save_prefix is not None:
         pred = F.softmax(state_action_values, dim=1).data.cpu().numpy()
-        save_transition_images(batch_size, pred, proj_distr, next_best_distr, dones, rewards, save_prefix)
+        save_transition_images(
+            batch_size, pred, proj_distr, next_best_distr, dones, rewards, save_prefix
+        )
 
     loss_v = -state_log_sm_v * proj_distr_v
     return loss_v.sum(dim=1).mean()
@@ -174,7 +179,7 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
 if __name__ == "__main__":
     random.seed(common.SEED)
     torch.manual_seed(common.SEED)
-    params = common.HYPERPARAMS['pong']
+    params = common.HYPERPARAMS["pong"]
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
     args = parser.parse_args()
@@ -191,10 +196,8 @@ if __name__ == "__main__":
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(lambda x: net.qvals(x), selector, device=device)
 
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, gamma=params.gamma)
-    buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=params.replay_size)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     def process_batch(engine, batch):
@@ -207,8 +210,14 @@ if __name__ == "__main__":
                 engine.state.prev_save = engine.state.iteration // 30000
 
         optimizer.zero_grad()
-        loss_v = calc_loss(batch, net, tgt_net.target_model, gamma=params.gamma,
-                           device=device, save_prefix=save_prefix)
+        loss_v = calc_loss(
+            batch,
+            net,
+            tgt_net.target_model,
+            gamma=params.gamma,
+            device=device,
+            save_prefix=save_prefix,
+        )
         loss_v.backward()
         optimizer.step()
         epsilon_tracker.frame(engine.state.iteration)
@@ -237,29 +246,45 @@ if __name__ == "__main__":
 
     @engine.on(ptan_ignite.EpisodeEvents.EPISODE_COMPLETED)
     def episode_completed(trainer: Engine):
-        print("Episode %d: reward=%s, steps=%s, speed=%.3f frames/s, elapsed=%s" % (
-            trainer.state.episode, trainer.state.episode_reward,
-            trainer.state.episode_steps, trainer.state.metrics.get('avg_fps', 0),
-            timedelta(seconds=trainer.state.metrics.get('time_passed', 0))))
+        print(
+            "Episode %d: reward=%s, steps=%s, speed=%.3f frames/s, elapsed=%s"
+            % (
+                trainer.state.episode,
+                trainer.state.episode_reward,
+                trainer.state.episode_steps,
+                trainer.state.metrics.get("avg_fps", 0),
+                timedelta(seconds=trainer.state.metrics.get("time_passed", 0)),
+            )
+        )
 
     @engine.on(ptan_ignite.EpisodeEvents.BOUND_REWARD_REACHED)
     def game_solved(trainer: Engine):
-        print("Game solved in %s, after %d episodes and %d iterations!" % (
-            timedelta(seconds=trainer.state.metrics['time_passed']),
-            trainer.state.episode, trainer.state.iteration))
+        print(
+            "Game solved in %s, after %d episodes and %d iterations!"
+            % (
+                timedelta(seconds=trainer.state.metrics["time_passed"]),
+                trainer.state.episode,
+                trainer.state.iteration,
+            )
+        )
         trainer.should_terminate = True
 
     logdir = f"runs/{datetime.now().isoformat(timespec='minutes')}-{params.run_name}-{NAME}"
     tb = tb_logger.TensorboardLogger(log_dir=logdir)
-    RunningAverage(output_transform=lambda v: v['loss']).attach(engine, "avg_loss")
+    RunningAverage(output_transform=lambda v: v["loss"]).attach(engine, "avg_loss")
 
-    episode_handler = tb_logger.OutputHandler(tag="episodes", metric_names=['reward', 'steps', 'avg_reward'])
-    tb.attach(engine, log_handler=episode_handler, event_name=ptan_ignite.EpisodeEvents.EPISODE_COMPLETED)
+    episode_handler = tb_logger.OutputHandler(
+        tag="episodes", metric_names=["reward", "steps", "avg_reward"]
+    )
+    tb.attach(
+        engine, log_handler=episode_handler, event_name=ptan_ignite.EpisodeEvents.EPISODE_COMPLETED
+    )
 
     # write to tensorboard every 100 iterations
     ptan_ignite.PeriodicEvents().attach(engine)
-    handler = tb_logger.OutputHandler(tag="train", metric_names=['avg_loss', 'avg_fps', "values"],
-                                      output_transform=lambda a: a)
+    handler = tb_logger.OutputHandler(
+        tag="train", metric_names=["avg_loss", "avg_fps", "values"], output_transform=lambda a: a
+    )
     tb.attach(engine, log_handler=handler, event_name=ptan_ignite.PeriodEvents.ITERS_100_COMPLETED)
 
     engine.run(common.batch_generator(buffer, params.replay_initial, params.batch_size))

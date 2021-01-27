@@ -11,7 +11,7 @@ import torch.nn.utils as nn_utils
 import torch.nn.functional as F
 import torch.optim as optim
 
-from lib import common
+from libc import common
 
 GAMMA = 0.99
 LEARNING_RATE = 0.001
@@ -33,21 +33,15 @@ class AtariA2C(nn.Module):
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         conv_out_size = self._get_conv_out(input_shape)
         self.policy = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
-            nn.ReLU(),
-            nn.Linear(512, n_actions)
+            nn.Linear(conv_out_size, 512), nn.ReLU(), nn.Linear(512, n_actions)
         )
 
-        self.value = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
-            nn.ReLU(),
-            nn.Linear(512, 1)
-        )
+        self.value = nn.Sequential(nn.Linear(conv_out_size, 512), nn.ReLU(), nn.Linear(512, 1))
 
     def _get_conv_out(self, shape):
         o = self.conv(torch.zeros(1, *shape))
@@ -59,7 +53,7 @@ class AtariA2C(nn.Module):
         return self.policy(conv_out), self.value(conv_out)
 
 
-def unpack_batch(batch, net, device='cpu'):
+def unpack_batch(batch, net, device="cpu"):
     """
     Convert batch into training tensors
     :param batch:
@@ -79,8 +73,7 @@ def unpack_batch(batch, net, device='cpu'):
             not_done_idx.append(idx)
             last_states.append(np.array(exp.last_state, copy=False))
 
-    states_v = torch.FloatTensor(
-        np.array(states, copy=False)).to(device)
+    states_v = torch.FloatTensor(np.array(states, copy=False)).to(device)
     actions_t = torch.LongTensor(actions).to(device)
 
     # handle rewards
@@ -112,7 +105,9 @@ if __name__ == "__main__":
     print(net)
 
     agent = ptan.agent.PolicyAgent(lambda x: net(x)[0], apply_softmax=True, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(
+        envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS
+    )
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE, eps=1e-3)
 
@@ -149,9 +144,13 @@ if __name__ == "__main__":
 
                 # calculate policy gradients only
                 loss_policy_v.backward(retain_graph=True)
-                grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
-                                        for p in net.parameters()
-                                        if p.grad is not None])
+                grads = np.concatenate(
+                    [
+                        p.grad.data.cpu().numpy().flatten()
+                        for p in net.parameters()
+                        if p.grad is not None
+                    ]
+                )
 
                 # apply entropy and value gradients
                 loss_v = entropy_loss_v + loss_value_v
@@ -161,13 +160,13 @@ if __name__ == "__main__":
                 # get full loss
                 loss_v += loss_policy_v
 
-                tb_tracker.track("advantage",       adv_v, step_idx)
-                tb_tracker.track("values",          value_v, step_idx)
-                tb_tracker.track("batch_rewards",   vals_ref_v, step_idx)
-                tb_tracker.track("loss_entropy",    entropy_loss_v, step_idx)
-                tb_tracker.track("loss_policy",     loss_policy_v, step_idx)
-                tb_tracker.track("loss_value",      loss_value_v, step_idx)
-                tb_tracker.track("loss_total",      loss_v, step_idx)
-                tb_tracker.track("grad_l2",         np.sqrt(np.mean(np.square(grads))), step_idx)
-                tb_tracker.track("grad_max",        np.max(np.abs(grads)), step_idx)
-                tb_tracker.track("grad_var",        np.var(grads), step_idx)
+                tb_tracker.track("advantage", adv_v, step_idx)
+                tb_tracker.track("values", value_v, step_idx)
+                tb_tracker.track("batch_rewards", vals_ref_v, step_idx)
+                tb_tracker.track("loss_entropy", entropy_loss_v, step_idx)
+                tb_tracker.track("loss_policy", loss_policy_v, step_idx)
+                tb_tracker.track("loss_value", loss_value_v, step_idx)
+                tb_tracker.track("loss_total", loss_v, step_idx)
+                tb_tracker.track("grad_l2", np.sqrt(np.mean(np.square(grads))), step_idx)
+                tb_tracker.track("grad_max", np.max(np.abs(grads)), step_idx)
+                tb_tracker.track("grad_var", np.var(grads), step_idx)

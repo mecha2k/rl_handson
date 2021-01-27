@@ -15,15 +15,16 @@ from ignite.engine import Engine
 from ignite.metrics import RunningAverage
 from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
-from lib import dqn_model, common
-from lib import atari_wrappers
+from libc import dqn_model, common
+from libc import atari_wrappers
 
 
 NAME = "04_wrappers_n_env"
 
 
-def batch_generator(buffer: ptan.experience.ExperienceReplayBuffer,
-                    initial: int, batch_size: int, steps: int):
+def batch_generator(
+    buffer: ptan.experience.ExperienceReplayBuffer, initial: int, batch_size: int, steps: int
+):
     buffer.populate(initial)
     while True:
         buffer.populate(steps)
@@ -36,17 +37,21 @@ if __name__ == "__main__":
 
     random.seed(common.SEED)
     torch.manual_seed(common.SEED)
-    params = common.HYPERPARAMS['pong']
+    params = common.HYPERPARAMS["pong"]
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
-    parser.add_argument("--envs", type=int, default=3, help="Amount of environments to run in parallel")
+    parser.add_argument(
+        "--envs", type=int, default=3, help="Amount of environments to run in parallel"
+    )
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
 
     envs = []
     for _ in range(args.envs):
         env = atari_wrappers.make_atari(params.env_name, skip_noop=True, skip_maxskip=True)
-        env = atari_wrappers.wrap_deepmind(env, pytorch_img=True, frame_stack=True, frame_stack_count=2)
+        env = atari_wrappers.wrap_deepmind(
+            env, pytorch_img=True, frame_stack=True, frame_stack_count=2
+        )
         env.seed(common.SEED)
         envs.append(env)
 
@@ -58,16 +63,15 @@ if __name__ == "__main__":
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(net, selector, device=device)
 
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
-        envs, agent, gamma=params.gamma)
-    buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=params.replay_size)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=params.gamma)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     def process_batch(engine, batch):
         optimizer.zero_grad()
-        loss_v = common.calc_loss_dqn(batch, net, tgt_net.target_model,
-                                      gamma=params.gamma, device=device)
+        loss_v = common.calc_loss_dqn(
+            batch, net, tgt_net.target_model, gamma=params.gamma, device=device
+        )
         loss_v.backward()
         optimizer.step()
         epsilon_tracker.frame(engine.state.iteration * args.envs)
@@ -84,29 +88,47 @@ if __name__ == "__main__":
 
     @engine.on(ptan_ignite.EpisodeEvents.EPISODE_COMPLETED)
     def episode_completed(trainer: Engine):
-        print("Episode %d: reward=%s, steps=%s, speed=%.3f frames/s, elapsed=%s" % (
-            trainer.state.episode, trainer.state.episode_reward,
-            trainer.state.episode_steps, trainer.state.metrics.get('fps', 0),
-            timedelta(seconds=trainer.state.metrics.get('time_passed', 0))))
+        print(
+            "Episode %d: reward=%s, steps=%s, speed=%.3f frames/s, elapsed=%s"
+            % (
+                trainer.state.episode,
+                trainer.state.episode_reward,
+                trainer.state.episode_steps,
+                trainer.state.metrics.get("fps", 0),
+                timedelta(seconds=trainer.state.metrics.get("time_passed", 0)),
+            )
+        )
 
     @engine.on(ptan_ignite.EpisodeEvents.BOUND_REWARD_REACHED)
     def game_solved(trainer: Engine):
-        print("Game solved in %s, after %d episodes and %d iterations!" % (
-            timedelta(seconds=trainer.state.metrics['time_passed']),
-            trainer.state.episode, trainer.state.iteration))
+        print(
+            "Game solved in %s, after %d episodes and %d iterations!"
+            % (
+                timedelta(seconds=trainer.state.metrics["time_passed"]),
+                trainer.state.episode,
+                trainer.state.iteration,
+            )
+        )
         trainer.should_terminate = True
 
-    logdir = f"runs/{datetime.now().isoformat(timespec='minutes')}-{params.run_name}-{NAME}={args.envs}"
+    logdir = (
+        f"runs/{datetime.now().isoformat(timespec='minutes')}-{params.run_name}-{NAME}={args.envs}"
+    )
     tb = tb_logger.TensorboardLogger(log_dir=logdir)
-    RunningAverage(output_transform=lambda v: v['loss']).attach(engine, "avg_loss")
+    RunningAverage(output_transform=lambda v: v["loss"]).attach(engine, "avg_loss")
 
-    episode_handler = tb_logger.OutputHandler(tag="episodes", metric_names=['reward', 'steps', 'avg_reward'])
-    tb.attach(engine, log_handler=episode_handler, event_name=ptan_ignite.EpisodeEvents.EPISODE_COMPLETED)
+    episode_handler = tb_logger.OutputHandler(
+        tag="episodes", metric_names=["reward", "steps", "avg_reward"]
+    )
+    tb.attach(
+        engine, log_handler=episode_handler, event_name=ptan_ignite.EpisodeEvents.EPISODE_COMPLETED
+    )
 
     # write to tensorboard every 100 iterations
     ptan_ignite.PeriodicEvents().attach(engine)
-    handler = tb_logger.OutputHandler(tag="train", metric_names=['avg_loss', 'avg_fps'],
-                                      output_transform=lambda a: a)
+    handler = tb_logger.OutputHandler(
+        tag="train", metric_names=["avg_loss", "avg_fps"], output_transform=lambda a: a
+    )
     tb.attach(engine, log_handler=handler, event_name=ptan_ignite.PeriodEvents.ITERS_100_COMPLETED)
 
     engine.run(batch_generator(buffer, params.replay_initial, params.batch_size, args.envs))

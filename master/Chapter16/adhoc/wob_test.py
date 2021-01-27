@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import sys
+
 sys.path.append("..")
 import time
 import gym
+
 # this import is not being used, but is required to make Universe envs available!
 import universe
 
@@ -18,8 +20,8 @@ if __name__ == "__main__":
     env = gym.make("wob.mini.BisectAngle-v0")
     env = wob_vnc.MiniWoBCropper(env)
 
-#    env.configure(remotes=1)   # local mode
-    env.configure(remotes='vnc://gpu:5900+15900')
+    #    env.configure(remotes=1)   # local mode
+    env.configure(remotes="vnc://gpu:5900+15900")
     print(env)
     obs = env.reset()
     saved = False

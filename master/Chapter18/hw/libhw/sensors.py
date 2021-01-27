@@ -11,10 +11,11 @@ class Sensor:
     """
     Base sensor class
     """
+
     def __init__(self, *args, **kwargs):
         self._buffer = bytearray(len(self))
         mv = memoryview(self._buffer)
-        self._byte = [mv[idx:idx+1] for idx in range(len(self))]
+        self._byte = [mv[idx : idx + 1] for idx in range(len(self))]
 
     @property
     def buffer(self):

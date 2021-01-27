@@ -26,8 +26,8 @@ MAX_ITERS = 100000
 # 3. reward obtained from the negative noise
 # 4. total amount of steps done
 RewardsItem = collections.namedtuple(
-    'RewardsItem', field_names=['seed', 'pos_reward',
-                                'neg_reward', 'steps'])
+    "RewardsItem", field_names=["seed", "pos_reward", "neg_reward", "steps"]
+)
 
 
 def make_env():
@@ -71,7 +71,9 @@ def sample_noise(net, device="cpu"):
     res = []
     neg = []
     for p in net.parameters():
-        noise_t = torch.FloatTensor(np.random.normal(size=p.data.size()).astype(np.float32)).to(device)
+        noise_t = torch.FloatTensor(np.random.normal(size=p.data.size()).astype(np.float32)).to(
+            device
+        )
         res.append(noise_t)
         neg.append(-noise_t)
     return res, neg
@@ -99,13 +101,12 @@ def compute_ranks(x):
 
 def compute_centered_ranks(x):
     y = compute_ranks(x.ravel()).reshape(x.shape).astype(np.float32)
-    y /= (x.size - 1)
-    y -= .5
+    y /= x.size - 1
+    y -= 0.5
     return y
 
 
-def train_step(optimizer, net, batch_noise, batch_reward,
-               writer, step_idx, noise_std):
+def train_step(optimizer, net, batch_noise, batch_reward, writer, step_idx, noise_std):
     weighted_noise = None
     norm_reward = compute_centered_ranks(np.array(batch_reward))
 
@@ -125,11 +126,9 @@ def train_step(optimizer, net, batch_noise, batch_reward,
     optimizer.step()
 
 
-def worker_func(worker_id, params_queue, rewards_queue,
-                device, noise_std):
+def worker_func(worker_id, params_queue, rewards_queue, device, noise_std):
     env = make_env()
-    net = Net(env.observation_space.shape[0],
-              env.action_space.shape[0]).to(device)
+    net = Net(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
     net.eval()
 
     while True:
@@ -142,19 +141,22 @@ def worker_func(worker_id, params_queue, rewards_queue,
             seed = np.random.randint(low=0, high=65535)
             np.random.seed(seed)
             noise, neg_noise = sample_noise(net, device=device)
-            pos_reward, pos_steps = eval_with_noise(
-                env, net, noise, noise_std, device=device)
-            neg_reward, neg_steps = eval_with_noise(
-                env, net, neg_noise, noise_std, device=device)
-            rewards_queue.put(RewardsItem(
-                seed=seed, pos_reward=pos_reward,
-                neg_reward=neg_reward, steps=pos_steps+neg_steps))
+            pos_reward, pos_steps = eval_with_noise(env, net, noise, noise_std, device=device)
+            neg_reward, neg_steps = eval_with_noise(env, net, neg_noise, noise_std, device=device)
+            rewards_queue.put(
+                RewardsItem(
+                    seed=seed,
+                    pos_reward=pos_reward,
+                    neg_reward=neg_reward,
+                    steps=pos_steps + neg_steps,
+                )
+            )
 
 
 if __name__ == "__main__":
-    mp.set_start_method('spawn')
+    mp.set_start_method("spawn")
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False, action='store_true', help="Enable CUDA mode")
+    parser.add_argument("--cuda", default=False, action="store_true", help="Enable CUDA mode")
     parser.add_argument("--lr", type=float, default=LEARNING_RATE)
     parser.add_argument("--noise-std", type=float, default=NOISE_STD)
     parser.add_argument("--iters", type=int, default=MAX_ITERS)
@@ -166,16 +168,12 @@ if __name__ == "__main__":
     net = Net(env.observation_space.shape[0], env.action_space.shape[0])
     print(net)
 
-    params_queues = [
-        mp.Queue(maxsize=1)
-        for _ in range(PROCESSES_COUNT)
-    ]
+    params_queues = [mp.Queue(maxsize=1) for _ in range(PROCESSES_COUNT)]
     rewards_queue = mp.Queue(maxsize=ITERS_PER_UPDATE)
     workers = []
 
     for idx, params_queue in enumerate(params_queues):
-        p_args = (idx, params_queue, rewards_queue,
-                device, args.noise_std)
+        p_args = (idx, params_queue, rewards_queue, device, args.noise_std)
         proc = mp.Process(target=worker_func, args=p_args)
         proc.start()
         workers.append(proc)
@@ -215,8 +213,7 @@ if __name__ == "__main__":
 
         dt_data = time.time() - t_start
         m_reward = np.mean(batch_reward)
-        train_step(optimizer, net, batch_noise, batch_reward,
-                   writer, step_idx, args.noise_std)
+        train_step(optimizer, net, batch_noise, batch_reward, writer, step_idx, args.noise_std)
         writer.add_scalar("reward_mean", m_reward, step_idx)
         writer.add_scalar("reward_std", np.std(batch_reward), step_idx)
         writer.add_scalar("reward_max", np.max(batch_reward), step_idx)
@@ -226,9 +223,20 @@ if __name__ == "__main__":
         writer.add_scalar("speed", speed, step_idx)
         dt_step = time.time() - t_start - dt_data
 
-        print("%d: reward=%.2f, speed=%.2f f/s, data_gather=%.3f, train=%.3f, steps_mean=%.2f, min=%.2f, max=%.2f, steps_std=%.2f" % (
-            step_idx, m_reward, speed, dt_data, dt_step, np.mean(batch_steps_data),
-            np.min(batch_steps_data), np.max(batch_steps_data), np.std(batch_steps_data)))
+        print(
+            "%d: reward=%.2f, speed=%.2f f/s, data_gather=%.3f, train=%.3f, steps_mean=%.2f, min=%.2f, max=%.2f, steps_std=%.2f"
+            % (
+                step_idx,
+                m_reward,
+                speed,
+                dt_data,
+                dt_step,
+                np.mean(batch_steps_data),
+                np.min(batch_steps_data),
+                np.max(batch_steps_data),
+                np.std(batch_steps_data),
+            )
+        )
 
     for worker, p_queue in zip(workers, params_queues):
         p_queue.put(None)

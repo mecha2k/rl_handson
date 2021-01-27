@@ -12,16 +12,14 @@ TGT_NET_SYNC = 10
 GAMMA = 0.9
 REPLAY_SIZE = 1000
 LR = 1e-3
-EPS_DECAY=0.99
+EPS_DECAY = 0.99
 
 
 class Net(nn.Module):
     def __init__(self, obs_size, hidden_size, n_actions):
         super(Net, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(obs_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, n_actions)
+            nn.Linear(obs_size, hidden_size), nn.ReLU(), nn.Linear(hidden_size, n_actions)
         )
 
     def forward(self, x):
@@ -63,13 +61,10 @@ if __name__ == "__main__":
     net = Net(obs_size, HIDDEN_SIZE, n_actions)
     tgt_net = ptan.agent.TargetNet(net)
     selector = ptan.actions.ArgmaxActionSelector()
-    selector = ptan.actions.EpsilonGreedyActionSelector(
-        epsilon=1, selector=selector)
+    selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=1, selector=selector)
     agent = ptan.agent.DQNAgent(net, selector)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, gamma=GAMMA)
-    buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=REPLAY_SIZE)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
     optimizer = optim.Adam(net.parameters(), LR)
 
     step = 0
@@ -82,19 +77,20 @@ if __name__ == "__main__":
 
         for reward, steps in exp_source.pop_rewards_steps():
             episode += 1
-            print("%d: episode %d done, reward=%.3f, epsilon=%.2f" % (
-                step, episode, reward, selector.epsilon))
+            print(
+                "%d: episode %d done, reward=%.3f, epsilon=%.2f"
+                % (step, episode, reward, selector.epsilon)
+            )
             solved = reward > 150
         if solved:
             print("Congrats!")
             break
 
-        if len(buffer) < 2*BATCH_SIZE:
+        if len(buffer) < 2 * BATCH_SIZE:
             continue
 
         batch = buffer.sample(BATCH_SIZE)
-        states_v, actions_v, tgt_q_v = unpack_batch(
-            batch, tgt_net.target_model, GAMMA)
+        states_v, actions_v, tgt_q_v = unpack_batch(batch, tgt_net.target_model, GAMMA)
         optimizer.zero_grad()
         q_v = net(states_v)
         q_v = q_v.gather(1, actions_v.unsqueeze(-1)).squeeze(-1)

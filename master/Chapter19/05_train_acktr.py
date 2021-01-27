@@ -8,7 +8,7 @@ import pybullet_envs
 import argparse
 from tensorboardX import SummaryWriter
 
-from lib import model, common, kfac, test_net, calc_logprob
+from libc import model, common, kfac, test_net, calc_logprob
 
 import numpy as np
 import torch
@@ -29,7 +29,7 @@ TEST_ITERS = 100000
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False, action='store_true', help='Enable CUDA')
+    parser.add_argument("--cuda", default=False, action="store_true", help="Enable CUDA")
     parser.add_argument("-n", "--name", required=True, help="Name of the run")
     parser.add_argument("-e", "--env", default=ENV_ID, help="Environment id, default=" + ENV_ID)
     args = parser.parse_args()
@@ -41,14 +41,18 @@ if __name__ == "__main__":
     envs = [gym.make(args.env) for _ in range(ENVS_COUNT)]
     test_env = gym.make(args.env)
 
-    net_act = model.ModelActor(envs[0].observation_space.shape[0], envs[0].action_space.shape[0]).to(device)
+    net_act = model.ModelActor(
+        envs[0].observation_space.shape[0], envs[0].action_space.shape[0]
+    ).to(device)
     net_crt = model.ModelCritic(envs[0].observation_space.shape[0]).to(device)
     print(net_act)
     print(net_crt)
 
     writer = SummaryWriter(comment="-acktr_" + args.name)
     agent = model.AgentA2C(net_act, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, GAMMA, steps_count=REWARD_STEPS)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(
+        envs, agent, GAMMA, steps_count=REWARD_STEPS
+    )
 
     opt_act = kfac.KFACOptimizer(net_act, lr=LEARNING_RATE_ACTOR)
     opt_crt = optim.Adam(net_crt.parameters(), lr=LEARNING_RATE_CRITIC)
@@ -67,8 +71,10 @@ if __name__ == "__main__":
                 if step_idx % TEST_ITERS == 0:
                     ts = time.time()
                     rewards, steps = test_net(net_act, test_env, device=device)
-                    print("Test done in %.2f sec, reward %.3f, steps %d" % (
-                        time.time() - ts, rewards, steps))
+                    print(
+                        "Test done in %.2f sec, reward %.3f, steps %d"
+                        % (time.time() - ts, rewards, steps)
+                    )
                     writer.add_scalar("test_reward", rewards, step_idx)
                     writer.add_scalar("test_steps", steps, step_idx)
                     if best_reward is None or best_reward < rewards:
@@ -83,8 +89,9 @@ if __name__ == "__main__":
                 if len(batch) < BATCH_SIZE:
                     continue
 
-                states_v, actions_v, vals_ref_v = \
-                    common.unpack_batch_a2c(batch, net_crt, last_val_gamma=GAMMA ** REWARD_STEPS, device=device)
+                states_v, actions_v, vals_ref_v = common.unpack_batch_a2c(
+                    batch, net_crt, last_val_gamma=GAMMA ** REWARD_STEPS, device=device
+                )
                 batch.clear()
 
                 opt_crt.zero_grad()
@@ -105,7 +112,10 @@ if __name__ == "__main__":
                 opt_act.zero_grad()
                 adv_v = vals_ref_v.unsqueeze(dim=-1) - value_v.detach()
                 loss_policy_v = -(adv_v * log_prob_v).mean()
-                entropy_loss_v = ENTROPY_BETA * (-(torch.log(2*math.pi*torch.exp(net_act.logstd)) + 1)/2).mean()
+                entropy_loss_v = (
+                    ENTROPY_BETA
+                    * (-(torch.log(2 * math.pi * torch.exp(net_act.logstd)) + 1) / 2).mean()
+                )
                 loss_v = loss_policy_v + entropy_loss_v
                 loss_v.backward()
                 opt_act.step()

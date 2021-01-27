@@ -13,7 +13,7 @@ import torch.nn.utils as nn_utils
 import torch.nn.functional as F
 import torch.optim as optim
 
-from lib import common
+from libc import common
 
 GAMMA = 0.99
 LEARNING_RATE = 5e-4
@@ -35,21 +35,15 @@ class AtariA2C(nn.Module):
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
             nn.ReLU(),
             nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         conv_out_size = self._get_conv_out(input_shape)
         self.policy = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
-            nn.ReLU(),
-            nn.Linear(512, n_actions)
+            nn.Linear(conv_out_size, 512), nn.ReLU(), nn.Linear(512, n_actions)
         )
 
-        self.value = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
-            nn.ReLU(),
-            nn.Linear(512, 1)
-        )
+        self.value = nn.Sequential(nn.Linear(conv_out_size, 512), nn.ReLU(), nn.Linear(512, 1))
 
     def _get_conv_out(self, shape):
         o = self.conv(torch.zeros(1, *shape))
@@ -65,7 +59,7 @@ def discount_with_dones(rewards, dones, gamma):
     discounted = []
     r = 0
     for reward, done in zip(rewards[::-1], dones[::-1]):
-        r = reward + gamma*r*(1.-done)
+        r = reward + gamma * r * (1.0 - done)
         discounted.append(r)
     return discounted[::-1]
 
@@ -128,11 +122,14 @@ def iterate_batches(envs, net, device="cpu"):
         out_mb_actions = mb_actions.flatten()
         out_mb_values = mb_values.flatten()
         out_mb_probs = mb_probs.flatten()
-        yield out_mb_obs, out_mb_rewards, out_mb_actions, out_mb_values, out_mb_probs, \
-              np.array(done_rewards), np.array(done_steps)
+        yield out_mb_obs, out_mb_rewards, out_mb_actions, out_mb_values, out_mb_probs, np.array(
+            done_rewards
+        ), np.array(done_steps)
 
 
-def train_a2c(net, mb_obs, mb_rewards, mb_actions, mb_values, optimizer, tb_tracker, step_idx, device="cpu"):
+def train_a2c(
+    net, mb_obs, mb_rewards, mb_actions, mb_values, optimizer, tb_tracker, step_idx, device="cpu"
+):
     optimizer.zero_grad()
     mb_adv = mb_rewards - mb_values
     adv_v = torch.FloatTensor(mb_adv).to(device)
@@ -199,7 +196,15 @@ if __name__ == "__main__":
 
     with common.RewardTracker(writer, stop_reward=18) as tracker:
         with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
-            for mb_obs, mb_rewards, mb_actions, mb_values, _, done_rewards, done_steps in iterate_batches(envs, net, device=device):
+            for (
+                mb_obs,
+                mb_rewards,
+                mb_actions,
+                mb_values,
+                _,
+                done_rewards,
+                done_steps,
+            ) in iterate_batches(envs, net, device=device):
                 if len(done_rewards) > 0:
                     total_steps += sum(done_steps)
                     speed = total_steps / (time.time() - ts_start)
@@ -210,9 +215,20 @@ if __name__ == "__main__":
                     tb_tracker.track("total_reward_max", best_reward, step_idx)
                     tb_tracker.track("total_reward", done_rewards, step_idx)
                     tb_tracker.track("total_steps", done_steps, step_idx)
-                    print("%d: done %d episodes, mean_reward=%.2f, best_reward=%.2f, speed=%.2f" % (
-                        step_idx, len(done_rewards), done_rewards.mean(), best_reward, speed))
+                    print(
+                        "%d: done %d episodes, mean_reward=%.2f, best_reward=%.2f, speed=%.2f"
+                        % (step_idx, len(done_rewards), done_rewards.mean(), best_reward, speed)
+                    )
 
-                train_a2c(net, mb_obs, mb_rewards, mb_actions, mb_values,
-                          optimizer, tb_tracker, step_idx, device=device)
+                train_a2c(
+                    net,
+                    mb_obs,
+                    mb_rewards,
+                    mb_actions,
+                    mb_values,
+                    optimizer,
+                    tb_tracker,
+                    step_idx,
+                    device=device,
+                )
                 step_idx += 1

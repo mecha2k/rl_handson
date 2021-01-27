@@ -13,6 +13,7 @@ class MCTS:
     """
     Monte Carlo Tree Search state and method
     """
+
     def __init__(self, cube_env, state, net, exploration_c=100, virt_loss_nu=100.0, device="cpu"):
         assert isinstance(cube_env, cubes.CubeEnv)
         assert cube_env.is_state(state)
@@ -25,7 +26,7 @@ class MCTS:
         self.device = device
 
         # Tree state
-        shape = (len(cube_env.action_enum), )
+        shape = (len(cube_env.action_enum),)
         # correspond to N_s(a) in the paper
         self.act_counts = collections.defaultdict(lambda: np.zeros(shape, dtype=np.uint32))
         # correspond to W_s(a)
@@ -55,7 +56,9 @@ class MCTS:
     def dump_state(self, s):
         print("")
         print("act_counts: %s" % ", ".join(map(lambda v: "%8d" % v, self.act_counts[s].tolist())))
-        print("probs:      %s" % ", ".join(map(lambda v: "%.2e" % v, self.prob_actions[s].tolist())))
+        print(
+            "probs:      %s" % ", ".join(map(lambda v: "%.2e" % v, self.prob_actions[s].tolist()))
+        )
         print("val_maxes:  %s" % ", ".join(map(lambda v: "%.2e" % v, self.val_maxes[s].tolist())))
 
         act_counts = self.act_counts[s]
@@ -199,16 +202,12 @@ class MCTS:
             met.add(s)
             for ss in self.edges[s]:
                 if ss not in self.edges:
-                    max_depth = max(max_depth, depth+1)
-                    sum_depth += depth+1
+                    max_depth = max(max_depth, depth + 1)
+                    sum_depth += depth + 1
                     leaves_count += 1
                 elif ss not in met:
-                    q.append((ss, depth+1))
-        return {
-            'max': max_depth,
-            'mean': sum_depth / leaves_count,
-            'leaves': leaves_count
-        }
+                    q.append((ss, depth + 1))
+        return {"max": max_depth, "mean": sum_depth / leaves_count, "leaves": leaves_count}
 
     def dump_solution(self, solution):
         assert isinstance(solution, list)
@@ -238,5 +237,3 @@ class MCTS:
                 if c_state in seen or c_state not in self.edges:
                     continue
                 queue.append((c_state, p))
-
-

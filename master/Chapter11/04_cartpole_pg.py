@@ -22,11 +22,7 @@ class PGN(nn.Module):
     def __init__(self, input_size, n_actions):
         super(PGN, self).__init__()
 
-        self.net = nn.Sequential(
-            nn.Linear(input_size, 128),
-            nn.ReLU(),
-            nn.Linear(128, n_actions)
-        )
+        self.net = nn.Sequential(nn.Linear(input_size, 128), nn.ReLU(), nn.Linear(128, n_actions))
 
     def forward(self, x):
         return self.net(x)
@@ -35,7 +31,7 @@ class PGN(nn.Module):
 def smooth(old: Optional[float], val: float, alpha: float = 0.95) -> float:
     if old is None:
         return val
-    return old * alpha + (1-alpha)*val
+    return old * alpha + (1 - alpha) * val
 
 
 if __name__ == "__main__":
@@ -45,10 +41,12 @@ if __name__ == "__main__":
     net = PGN(env.observation_space.shape[0], env.action_space.n)
     print(net)
 
-    agent = ptan.agent.PolicyAgent(net, preprocessor=ptan.agent.float32_preprocessor,
-                                   apply_softmax=True)
+    agent = ptan.agent.PolicyAgent(
+        net, preprocessor=ptan.agent.float32_preprocessor, apply_softmax=True
+    )
     exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+        env, agent, gamma=GAMMA, steps_count=REWARD_STEPS
+    )
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
 
@@ -76,8 +74,10 @@ if __name__ == "__main__":
             reward = new_rewards[0]
             total_rewards.append(reward)
             mean_rewards = float(np.mean(total_rewards[-100:]))
-            print("%d: reward: %6.2f, mean_100: %6.2f, episodes: %d" % (
-                step_idx, reward, mean_rewards, done_episodes))
+            print(
+                "%d: reward: %6.2f, mean_100: %6.2f, episodes: %d"
+                % (step_idx, reward, mean_rewards, done_episodes)
+            )
             writer.add_scalar("reward", reward, step_idx)
             writer.add_scalar("reward_100", mean_rewards, step_idx)
             writer.add_scalar("episodes", done_episodes, step_idx)

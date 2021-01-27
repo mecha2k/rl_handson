@@ -16,28 +16,29 @@ class TestEnv(unittest.TestCase):
 class TestStates(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        p = data.Prices(open=np.array([1.0, 2.0, 3.0, 1.0]),
-                        high=np.array([2.0, 3.0, 4.0, 2.0]),
-                        low=np.array([0.0, 1.0, 2.0, 0.0]),
-                        close=np.array([2.0, 3.0, 1.0, 2.0]),
-                        volume=np.array([10.0, 10.0, 10.0, 10.0]))
+        p = data.Prices(
+            open=np.array([1.0, 2.0, 3.0, 1.0]),
+            high=np.array([2.0, 3.0, 4.0, 2.0]),
+            low=np.array([0.0, 1.0, 2.0, 0.0]),
+            close=np.array([2.0, 3.0, 1.0, 2.0]),
+            volume=np.array([10.0, 10.0, 10.0, 10.0]),
+        )
         cls.prices = {"TST": data.prices_to_relative(p)}
-
 
     def test_basic(self):
         s = environ.State(bars_count=4, commission_perc=0.0, reset_on_close=False, volumes=False)
-        self.assertEqual(s.shape, (4*3+2,))
+        self.assertEqual(s.shape, (4 * 3 + 2,))
 
     def test_basic1d(self):
         s = environ.State1D(bars_count=2, comission_perc=0.0, reset_on_close=False, volumes=True)
         self.assertEqual(s.shape, (6, 2))
-        s.reset(self.prices['TST'], 1)
+        s.reset(self.prices["TST"], 1)
         d = s.encode()
         self.assertEqual(s.shape, d.shape)
 
     def test_reset(self):
         s = environ.State(bars_count=1, commission_perc=0.0, reset_on_close=False)
-        s.reset(self.prices['TST'], offset=0)
+        s.reset(self.prices["TST"], offset=0)
         self.assertFalse(s.have_position)
         self.assertAlmostEqual(s._cur_close(), 2.0)
         r, done = s.step(environ.Actions.Skip)
@@ -54,8 +55,10 @@ class TestStates(unittest.TestCase):
         self.assertTrue(done)
 
     def test_reward(self):
-        s = environ.State(bars_count=1, commission_perc=0.0, reset_on_close=False, reward_on_close=True)
-        s.reset(self.prices['TST'], offset=0)
+        s = environ.State(
+            bars_count=1, commission_perc=0.0, reset_on_close=False, reward_on_close=True
+        )
+        s.reset(self.prices["TST"], offset=0)
         self.assertFalse(s.have_position)
         self.assertAlmostEqual(s._cur_close(), 2.0)
         r, done = s.step(environ.Actions.Buy)
@@ -65,7 +68,7 @@ class TestStates(unittest.TestCase):
         self.assertAlmostEqual(s._cur_close(), 3.0)
         r, done = s.step(environ.Actions.Skip)
         self.assertFalse(done)
-        self.assertAlmostEqual(r, -2/3 * 100.0)
+        self.assertAlmostEqual(r, -2 / 3 * 100.0)
         self.assertAlmostEqual(s._cur_close(), 1.0)
         r, done = s.step(environ.Actions.Skip)
         self.assertTrue(done)
@@ -74,7 +77,7 @@ class TestStates(unittest.TestCase):
 
     def test_comission(self):
         s = environ.State(bars_count=1, commission_perc=1.0, reset_on_close=False)
-        s.reset(self.prices['TST'], offset=0)
+        s.reset(self.prices["TST"], offset=0)
         self.assertFalse(s.have_position)
         self.assertAlmostEqual(s._cur_close(), 2.0)
         r, done = s.step(environ.Actions.Buy)
@@ -85,8 +88,10 @@ class TestStates(unittest.TestCase):
         self.assertAlmostEqual(s._cur_close(), 3.0)
 
     def test_final_reward(self):
-        s = environ.State(bars_count=1, commission_perc=0.0, reset_on_close=False, reward_on_close=True)
-        s.reset(self.prices['TST'], offset=0)
+        s = environ.State(
+            bars_count=1, commission_perc=0.0, reset_on_close=False, reward_on_close=True
+        )
+        s.reset(self.prices["TST"], offset=0)
         self.assertFalse(s.have_position)
         self.assertAlmostEqual(s._cur_close(), 2.0)
         r, done = s.step(environ.Actions.Buy)
@@ -96,7 +101,7 @@ class TestStates(unittest.TestCase):
         self.assertAlmostEqual(s._cur_close(), 3.0)
         r, done = s.step(environ.Actions.Skip)
         self.assertFalse(done)
-        self.assertAlmostEqual(r, -2/3 * 100.0)
+        self.assertAlmostEqual(r, -2 / 3 * 100.0)
         self.assertAlmostEqual(s._cur_close(), 1.0)
         r, done = s.step(environ.Actions.Close)
         self.assertTrue(done)

@@ -11,14 +11,13 @@ import torch.nn.functional as F
 
 from ignite.engine import Engine
 
-from lib import common, dqn_extra
+from libc import common, dqn_extra
 
 NAME = "07_distrib"
 
 
 def calc_loss(batch, net, tgt_net, gamma, device="cpu"):
-    states, actions, rewards, dones, next_states = \
-        common.unpack_batch(batch)
+    states, actions, rewards, dones, next_states = common.unpack_batch(batch)
     batch_size = len(batch)
 
     states_v = torch.tensor(states).to(device)
@@ -34,8 +33,7 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu"):
     next_best_distr = next_distr[range(batch_size), next_acts]
     dones = dones.astype(np.bool)
 
-    proj_distr = dqn_extra.distr_projection(
-        next_best_distr, rewards, dones, gamma)
+    proj_distr = dqn_extra.distr_projection(next_best_distr, rewards, dones, gamma)
 
     distr_v = net(states_v)
     sa_vals = distr_v[range(batch_size), actions_v.data]
@@ -49,7 +47,7 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu"):
 if __name__ == "__main__":
     random.seed(common.SEED)
     torch.manual_seed(common.SEED)
-    params = common.HYPERPARAMS['pong']
+    params = common.HYPERPARAMS["pong"]
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
     args = parser.parse_args()
@@ -66,16 +64,13 @@ if __name__ == "__main__":
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(lambda x: net.qvals(x), selector, device=device)
 
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, gamma=params.gamma)
-    buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=params.replay_size)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     def process_batch(engine, batch):
         optimizer.zero_grad()
-        loss_v = calc_loss(batch, net, tgt_net.target_model,
-                           gamma=params.gamma, device=device)
+        loss_v = calc_loss(batch, net, tgt_net.target_model, gamma=params.gamma, device=device)
         loss_v.backward()
         optimizer.step()
         epsilon_tracker.frame(engine.state.iteration)

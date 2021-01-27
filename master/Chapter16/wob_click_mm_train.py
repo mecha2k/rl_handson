@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 from tensorboardX import SummaryWriter
 
-from lib import wob_vnc, model_vnc, common, vnc_demo
+from libc import wob_vnc, model_vnc, common, vnc_demo
 
 import ptan
 
@@ -28,7 +28,7 @@ ENTROPY_BETA = 0.001
 CLIP_GRAD = 0.05
 
 DEMO_PROB = 0.5
-CUT_DEMO_PROB_FRAMES = 50000        # After how many frames, demo probability will be dropped to 1%
+CUT_DEMO_PROB_FRAMES = 50000  # After how many frames, demo probability will be dropped to 1%
 
 SAVES_DIR = "saves"
 
@@ -36,19 +36,23 @@ SAVES_DIR = "saves"
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--name", required=True, help="Name of the run")
-    parser.add_argument("--cuda", default=False, action='store_true', help="CUDA mode")
-    parser.add_argument("--port-ofs", type=int, default=0, help="Offset for container's ports, default=0")
-    parser.add_argument("--env", default=ENV_NAME, help="Environment name to solve, default=" + ENV_NAME)
+    parser.add_argument("--cuda", default=False, action="store_true", help="CUDA mode")
+    parser.add_argument(
+        "--port-ofs", type=int, default=0, help="Offset for container's ports, default=0"
+    )
+    parser.add_argument(
+        "--env", default=ENV_NAME, help="Environment name to solve, default=" + ENV_NAME
+    )
     parser.add_argument("--demo", help="Demo dir to load. Default=No demo")
-    parser.add_argument("--host", default='localhost', help="Host with docker containers")
+    parser.add_argument("--host", default="localhost", help="Host with docker containers")
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
 
     env_name = args.env
-    if not env_name.startswith('wob.mini.'):
+    if not env_name.startswith("wob.mini."):
         env_name = "wob.mini." + env_name
 
-    name = env_name.split('.')[-1] + "_" + args.name
+    name = env_name.split(".")[-1] + "_" + args.name
     writer = SummaryWriter(comment="-wob_click_mm_" + name)
     saves_path = os.path.join(SAVES_DIR, name)
     os.makedirs(saves_path, exist_ok=True)
@@ -64,17 +68,23 @@ if __name__ == "__main__":
     env = gym.make(env_name)
     env = universe.wrappers.experimental.SoftmaxClickMouse(env)
     env = wob_vnc.MiniWoBCropper(env, keep_text=True)
-    wob_vnc.configure(env, wob_vnc.remotes_url(port_ofs=args.port_ofs, hostname=args.host, count=REMOTES_COUNT))
+    wob_vnc.configure(
+        env, wob_vnc.remotes_url(port_ofs=args.port_ofs, hostname=args.host, count=REMOTES_COUNT)
+    )
 
-    net = model_vnc.ModelMultimodal(input_shape=wob_vnc.WOB_SHAPE, n_actions=env.action_space.n).to(device)
+    net = model_vnc.ModelMultimodal(input_shape=wob_vnc.WOB_SHAPE, n_actions=env.action_space.n).to(
+        device
+    )
     print(net)
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE, eps=1e-3)
 
     preprocessor = model_vnc.MultimodalPreprocessor(device=device)
-    agent = ptan.agent.PolicyAgent(lambda x: net(x)[0], device=device,
-                                   apply_softmax=True, preprocessor=preprocessor)
+    agent = ptan.agent.PolicyAgent(
+        lambda x: net(x)[0], device=device, apply_softmax=True, preprocessor=preprocessor
+    )
     exp_source = ptan.experience.ExperienceSourceFirstLast(
-        [env], agent, gamma=GAMMA, steps_count=REWARD_STEPS, vectorized=True)
+        [env], agent, gamma=GAMMA, steps_count=REWARD_STEPS, vectorized=True
+    )
 
     best_reward = None
     with common.RewardTracker(writer) as tracker:
@@ -94,7 +104,9 @@ if __name__ == "__main__":
                                 fname = os.path.join(saves_path, name)
                                 torch.save(net.state_dict(), fname + ".dat")
                                 preprocessor.save(fname + ".pre")
-                                print("Best reward updated: %.3f -> %.3f" % (best_reward, mean_reward))
+                                print(
+                                    "Best reward updated: %.3f -> %.3f" % (best_reward, mean_reward)
+                                )
                             best_reward = mean_reward
                 batch.append(exp)
                 if len(batch) < BATCH_SIZE:
@@ -105,13 +117,23 @@ if __name__ == "__main__":
                 if demo_samples and random.random() < DEMO_PROB:
                     random.shuffle(demo_samples)
                     demo_batch = demo_samples[:BATCH_SIZE]
-                    model_vnc.train_demo(net, optimizer, demo_batch, writer, step_idx,
-                                         preprocessor=preprocessor,
-                                         device=device)
+                    model_vnc.train_demo(
+                        net,
+                        optimizer,
+                        demo_batch,
+                        writer,
+                        step_idx,
+                        preprocessor=preprocessor,
+                        device=device,
+                    )
 
-                states_v, actions_t, vals_ref_v = \
-                    common.unpack_batch(batch, net, last_val_gamma=GAMMA ** REWARD_STEPS,
-                                        device=device, states_preprocessor=preprocessor)
+                states_v, actions_t, vals_ref_v = common.unpack_batch(
+                    batch,
+                    net,
+                    last_val_gamma=GAMMA ** REWARD_STEPS,
+                    device=device,
+                    states_preprocessor=preprocessor,
+                )
                 batch.clear()
 
                 optimizer.zero_grad()
