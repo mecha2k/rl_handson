@@ -9,7 +9,7 @@ import torch.optim as optim
 
 from ignite.engine import Engine
 
-from lib import dqn_model, common, dqn_extra
+from libc import dqn_model, common, dqn_extra
 
 NAME = "05_prio_replay"
 PRIO_REPLAY_ALPHA = 0.6

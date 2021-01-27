@@ -16,7 +16,7 @@ from ignite.engine import Engine
 from ignite.metrics import RunningAverage
 from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
-from lib import dqn_model, common, atari_wrappers
+from libc import dqn_model, common, atari_wrappers
 
 BATCH_MUL = 4
 NAME = "04_new_wrappers_parallel"

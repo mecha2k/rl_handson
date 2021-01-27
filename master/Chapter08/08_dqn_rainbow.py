@@ -9,7 +9,7 @@ import torch.optim as optim
 
 from ignite.engine import Engine
 
-from lib import common, dqn_extra
+from libc import common, dqn_extra
 
 NAME = "08_rainbow"
 N_STEPS = 4

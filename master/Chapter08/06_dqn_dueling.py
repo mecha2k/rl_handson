@@ -10,7 +10,7 @@ import torch.optim as optim
 
 from ignite.engine import Engine
 
-from lib import common, dqn_extra
+from libc import common, dqn_extra
 
 NAME = "06_dueling"
 STATES_TO_EVALUATE = 1000

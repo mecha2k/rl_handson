@@ -11,7 +11,7 @@ import torch.nn as nn
 
 from ignite.engine import Engine
 
-from lib import dqn_model, common
+from libc import dqn_model, common
 
 NAME = "03_double"
 STATES_TO_EVALUATE = 1000

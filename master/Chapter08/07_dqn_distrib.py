@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from ignite.engine import Engine
 
-from lib import common, dqn_extra
+from libc import common, dqn_extra
 
 NAME = "07_distrib"
 

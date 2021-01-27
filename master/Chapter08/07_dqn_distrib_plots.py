@@ -16,8 +16,8 @@ from ignite.engine import Engine
 from ignite.metrics import RunningAverage
 from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
-import lib.dqn_extra
-from lib import dqn_model, common
+import libc.dqn_extra
+from libc import dqn_model, common
 
 NAME = "07_distrib"
 
@@ -156,7 +156,7 @@ def calc_loss(batch, net, tgt_net, gamma, device="cpu", save_prefix=None):
     dones = dones.astype(np.bool)
 
     # project our distribution using Bellman update
-    proj_distr = lib.dqn_extra.distr_projection(
+    proj_distr = libc.dqn_extra.distr_projection(
         next_best_distr, rewards, dones, Vmin, Vmax, N_ATOMS, gamma
     )
 

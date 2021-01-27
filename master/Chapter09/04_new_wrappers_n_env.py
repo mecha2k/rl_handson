@@ -15,8 +15,8 @@ from ignite.engine import Engine
 from ignite.metrics import RunningAverage
 from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
-from lib import dqn_model, common
-from lib import atari_wrappers
+from libc import dqn_model, common
+from libc import atari_wrappers
 
 
 NAME = "04_wrappers_n_env"

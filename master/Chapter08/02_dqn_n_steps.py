@@ -7,7 +7,7 @@ import torch
 import torch.optim as optim
 from ignite.engine import Engine
 
-from lib import dqn_model, common
+from libc import dqn_model, common
 
 NAME = "02_n_steps"
 DEFAULT_N_STEPS = 4
