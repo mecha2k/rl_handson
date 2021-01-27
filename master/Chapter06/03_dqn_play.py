@@ -5,9 +5,7 @@ import numpy as np
 import torch
 import collections
 
-from lib import wrappers
-from lib import dqn_model
-
+from master.Chapter06 import dqn_model, wrappers
 
 if __name__ == "__main__":
     DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
