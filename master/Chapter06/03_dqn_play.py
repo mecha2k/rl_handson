@@ -7,19 +7,25 @@ import collections
 
 from master.Chapter06.libc import dqn_model, wrappers
 
-if __name__ == "__main__":
-    DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
-    FPS = 25
+
+def main():
+    env_name = "PongNoFrameskip-v4"
+    frame_per_sec = 25
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model", required=True, help="Model file to load")
+    parser.add_argument(
+        "-m",
+        "--model",
+        default="./results/PongNoFrameskip-v4-best.dat",
+        help="Model file to load",
+    )
     parser.add_argument(
         "-e",
         "--env",
-        default=DEFAULT_ENV_NAME,
-        help="Environment name to use, default=" + DEFAULT_ENV_NAME,
+        default=env_name,
+        help="Environment name to use, default=" + env_name,
     )
-    parser.add_argument("-r", "--record", help="Directory for video")
+    parser.add_argument("-r", "--record", default="./video", help="Directory for video")
     parser.add_argument(
         "--no-vis", default=True, dest="vis", help="Disable visualization", action="store_false"
     )
@@ -27,7 +33,7 @@ if __name__ == "__main__":
 
     env = wrappers.make_env(args.env)
     if args.record:
-        env = gym.wrappers.Monitor(env, args.record)
+        env = gym.wrappers.Monitor(env, args.record, force=True)
     net = dqn_model.DQN(env.observation_space.shape, env.action_space.n)
     state = torch.load(args.model, map_location=lambda stg, _: stg)
     net.load_state_dict(state)
@@ -49,10 +55,14 @@ if __name__ == "__main__":
         if done:
             break
         if args.vis:
-            delta = 1 / FPS - (time.time() - start_ts)
+            delta = 1 / frame_per_sec - (time.time() - start_ts)
             if delta > 0:
                 time.sleep(delta)
     print("Total reward: %.2f" % total_reward)
     print("Action counts:", c)
     if args.record:
         env.env.close()
+
+
+if __name__ == "__main__":
+    main()
