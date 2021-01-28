@@ -93,12 +93,12 @@ def calc_loss(batch, net, tgt_net, device="cpu", gamma=0.99):
 
 
 def main():
-    DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
-    MEAN_REWARD_BOUND = 19
+    env_name = "PongNoFrameskip-v4"
 
     batch_size = 32
     sync_target_frames = 1000
     eps_decay_last_frame = 150000
+    mean_reward_bound = 19
     eps_start = 1.0
     eps_final = 0.01
     replay_size = 10000
@@ -109,8 +109,8 @@ def main():
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
     parser.add_argument(
         "--env",
-        default=DEFAULT_ENV_NAME,
-        help="Name of the environment, default=" + DEFAULT_ENV_NAME,
+        default=env_name,
+        help="Name of the environment, default=" + env_name,
     )
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
@@ -153,7 +153,7 @@ def main():
                 if best_m_reward is not None:
                     print(f"Best reward updated {best_m_reward:.3f} -> {m_reward:.3f}")
                 best_m_reward = m_reward
-            if m_reward > MEAN_REWARD_BOUND:
+            if m_reward > mean_reward_bound:
                 print("Solved in %d frames!" % frame_idx)
                 break
 
