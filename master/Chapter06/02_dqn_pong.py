@@ -106,7 +106,7 @@ def main():
     learning_rate = 1e-4
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
+    parser.add_argument("--cuda", default=True, action="store_true", help="Enable cuda")
     parser.add_argument(
         "--env",
         default=env_name,
