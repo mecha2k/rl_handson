@@ -32,6 +32,7 @@ def main():
     args = parser.parse_args()
 
     env = wrappers.make_env(args.env)
+    print(env.unwrapped.get_action_meanings())
     if args.record:
         env = gym.wrappers.Monitor(env, args.record, force=True)
     net = dqn_model.DQN(env.observation_space.shape, env.action_space.n)
