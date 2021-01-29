@@ -81,8 +81,8 @@ def calc_loss(batch, net, tgt_net, device="cpu", gamma=0.99):
     actions_v = torch.tensor(actions).to(device)
     rewards_v = torch.tensor(rewards).to(device)
     done_mask = torch.BoolTensor(dones).to(device)
-
-    state_action_values = net(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
+    index_v = actions_v.unsqueeze(-1).type(torch.LongTensor).to(device)
+    state_action_values = net(states_v).gather(1, index_v).squeeze(-1)
     with torch.no_grad():
         next_state_values = tgt_net(next_states_v).max(1)[0]
         next_state_values[done_mask] = 0.0
@@ -108,9 +108,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=True, action="store_true", help="Enable cuda")
     parser.add_argument(
-        "--env",
-        default=env_name,
-        help="Name of the environment, default=" + env_name,
+        "--env", default=env_name, help="Name of the environment, default=" + env_name,
     )
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")

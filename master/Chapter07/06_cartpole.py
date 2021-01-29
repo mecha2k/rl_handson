@@ -6,15 +6,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 
-HIDDEN_SIZE = 128
-BATCH_SIZE = 16
-TGT_NET_SYNC = 10
-GAMMA = 0.9
-REPLAY_SIZE = 1000
-LR = 1e-3
-EPS_DECAY = 0.99
-
-
 class Net(nn.Module):
     def __init__(self, obs_size, hidden_size, n_actions):
         super(Net, self).__init__()
@@ -53,19 +44,27 @@ def unpack_batch(batch, net, gamma):
     return states_v, actions_v, best_last_q_v * gamma + rewards_v
 
 
-if __name__ == "__main__":
+def main():
     env = gym.make("CartPole-v0")
     obs_size = env.observation_space.shape[0]
     n_actions = env.action_space.n
 
-    net = Net(obs_size, HIDDEN_SIZE, n_actions)
+    hidden_size = 128
+    batch_size = 16
+    tgt_net_sync = 10
+    gamma = 0.9
+    replay_size = 1000
+    learning_rate = 1e-3
+    eps_decay = 0.99
+
+    net = Net(obs_size, hidden_size, n_actions)
     tgt_net = ptan.agent.TargetNet(net)
     selector = ptan.actions.ArgmaxActionSelector()
     selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=1, selector=selector)
     agent = ptan.agent.DQNAgent(net, selector)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA)
-    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
-    optimizer = optim.Adam(net.parameters(), LR)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=gamma)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=replay_size)
+    optimizer = optim.Adam(net.parameters(), learning_rate)
 
     step = 0
     episode = 0
@@ -86,18 +85,22 @@ if __name__ == "__main__":
             print("Congrats!")
             break
 
-        if len(buffer) < 2 * BATCH_SIZE:
+        if len(buffer) < 2 * batch_size:
             continue
 
-        batch = buffer.sample(BATCH_SIZE)
-        states_v, actions_v, tgt_q_v = unpack_batch(batch, tgt_net.target_model, GAMMA)
+        batch = buffer.sample(batch_size)
+        states_v, actions_v, tgt_q_v = unpack_batch(batch, tgt_net.target_model, gamma)
         optimizer.zero_grad()
         q_v = net(states_v)
         q_v = q_v.gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
         loss_v = F.mse_loss(q_v, tgt_q_v)
         loss_v.backward()
         optimizer.step()
-        selector.epsilon *= EPS_DECAY
+        selector.epsilon *= eps_decay
 
-        if step % TGT_NET_SYNC == 0:
+        if step % tgt_net_sync == 0:
             tgt_net.sync()
+
+
+if __name__ == "__main__":
+    main()
