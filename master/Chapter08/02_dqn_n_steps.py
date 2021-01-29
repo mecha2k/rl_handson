@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import gym
 import ptan
 import argparse
@@ -6,8 +5,8 @@ import random
 import torch
 import torch.optim as optim
 from ignite.engine import Engine
-
 from libc import dqn_model, common
+
 
 NAME = "02_n_steps"
 DEFAULT_N_STEPS = 4
@@ -18,7 +17,7 @@ if __name__ == "__main__":
     torch.manual_seed(common.SEED)
     params = common.HYPERPARAMS["pong"]
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
+    parser.add_argument("--cuda", default=True, action="store_true", help="Enable cuda")
     parser.add_argument(
         "-n", type=int, default=DEFAULT_N_STEPS, help="Steps to do on Bellman unroll"
     )
