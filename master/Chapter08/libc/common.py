@@ -13,7 +13,7 @@ from ignite.metrics import RunningAverage
 from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
 
-SEED = 123
+SEED = 100
 
 HYPERPARAMS = {
     "pong": SimpleNamespace(
