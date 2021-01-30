@@ -18,6 +18,8 @@ agents
 .vscode
 .idea
 
+master/Chapter04/mon
+master/Chapter04/runs
 
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
