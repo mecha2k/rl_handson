@@ -1,6 +1,6 @@
 import gym
-from collections import namedtuple
 import numpy as np
+from collections import namedtuple
 from tensorboardX import SummaryWriter
 
 import torch
