@@ -1,9 +1,11 @@
+from abc import ABCMeta
+
 import gym
 import ptan
 from typing import List, Optional, Tuple, Any
 
 
-class ToyEnv(gym.Env):
+class ToyEnv(gym.Env, metaclass=ABCMeta):
     """
     Environment with observation 0..4 and actions 0..2
     Observations are rotated sequentialy mod 5, reward is equal to given action.
