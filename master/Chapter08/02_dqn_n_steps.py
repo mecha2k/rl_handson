@@ -17,7 +17,7 @@ if __name__ == "__main__":
     torch.manual_seed(common.SEED)
     params = common.HYPERPARAMS["pong"]
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cuda", default=True, action="store_true", help="Enable cuda")
+    parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
     parser.add_argument(
         "-n", type=int, default=DEFAULT_N_STEPS, help="Steps to do on Bellman unroll"
     )
@@ -41,15 +41,15 @@ if __name__ == "__main__":
     buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
-    def process_batch(engine, batch):
+    def process_batch(engine_, batch):
         optimizer.zero_grad()
         loss_v = common.calc_loss_dqn(
             batch, net, tgt_net.target_model, gamma=params.gamma ** args.n, device=device
         )
         loss_v.backward()
         optimizer.step()
-        epsilon_tracker.frame(engine.state.iteration)
-        if engine.state.iteration % params.target_net_sync == 0:
+        epsilon_tracker.frame(engine_.state.iteration)
+        if engine_.state.iteration % params.target_net_sync == 0:
             tgt_net.sync()
         return {
             "loss": loss_v.item(),

@@ -27,7 +27,7 @@ class ToyEnv(gym.Env, metaclass=ABCMeta):
         if is_done:
             return self.step_index % self.observation_space.n, 0.0, is_done, {}
         self.step_index += 1
-        return self.step_index % self.observation_space.n, float(action), self.step_index == 10, {}
+        return self.step_index % self.observation_space.n, float(action), is_done, {}
 
 
 class DullAgent(ptan.agent.BaseAgent):

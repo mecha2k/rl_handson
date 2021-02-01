@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import gym
 import ptan
 import argparse
@@ -10,12 +9,7 @@ import torch.optim as optim
 import torch.nn as nn
 
 from ignite.engine import Engine
-
 from libc import dqn_model, common
-
-NAME = "03_double"
-STATES_TO_EVALUATE = 1000
-EVAL_EVERY_FRAME = 100
 
 
 def calc_loss_double_dqn(batch, net, tgt_net, gamma, device="cpu", double=True):
@@ -42,7 +36,11 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma, device="cpu", double=True):
     return nn.MSELoss()(state_action_vals, exp_sa_vals)
 
 
-if __name__ == "__main__":
+def main():
+    NAME = "03_double"
+    STATES_TO_EVALUATE = 1000
+    EVAL_EVERY_FRAME = 100
+
     random.seed(common.SEED)
     torch.manual_seed(common.SEED)
     params = common.HYPERPARAMS["pong"]
@@ -67,24 +65,24 @@ if __name__ == "__main__":
     buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
-    def process_batch(engine, batch):
+    def process_batch(engine_, batch):
         optimizer.zero_grad()
         loss_v = calc_loss_double_dqn(
             batch, net, tgt_net.target_model, gamma=params.gamma, device=device, double=args.double
         )
         loss_v.backward()
         optimizer.step()
-        epsilon_tracker.frame(engine.state.iteration)
-        if engine.state.iteration % params.target_net_sync == 0:
+        epsilon_tracker.frame(engine_.state.iteration)
+        if engine_.state.iteration % params.target_net_sync == 0:
             tgt_net.sync()
-        if engine.state.iteration % EVAL_EVERY_FRAME == 0:
-            eval_states = getattr(engine.state, "eval_states", None)
+        if engine_.state.iteration % EVAL_EVERY_FRAME == 0:
+            eval_states = getattr(engine_.state, "eval_states", None)
             if eval_states is None:
                 eval_states = buffer.sample(STATES_TO_EVALUATE)
                 eval_states = [np.array(transition.state, copy=False) for transition in eval_states]
                 eval_states = np.array(eval_states, copy=False)
-                engine.state.eval_states = eval_states
-            engine.state.metrics["values"] = common.calc_values_of_states(eval_states, net, device)
+                engine_.state.eval_states = eval_states
+            engine_.state.metrics["values"] = common.calc_values_of_states(eval_states, net, device)
         return {
             "loss": loss_v.item(),
             "epsilon": selector.epsilon,
@@ -95,3 +93,7 @@ if __name__ == "__main__":
         engine, params, exp_source, f"{NAME}={args.double}", extra_metrics=("values",)
     )
     engine.run(common.batch_generator(buffer, params.replay_initial, params.batch_size))
+
+
+if __name__ == "__main__":
+    main()
