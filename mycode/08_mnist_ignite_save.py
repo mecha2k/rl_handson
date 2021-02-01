@@ -293,7 +293,7 @@ def main():
         help="input batch size for validation (default: 1000)",
     )
     parser.add_argument(
-        "--epochs", type=int, default=1, help="number of epochs to train (default: 10)"
+        "--epochs", type=int, default=5, help="number of epochs to train (default: 10)"
     )
     parser.add_argument("--lr", type=float, default=0.01, help="learning rate (default: 0.01)")
     parser.add_argument("--momentum", type=float, default=0.5, help="SGD momentum (default: 0.5)")
