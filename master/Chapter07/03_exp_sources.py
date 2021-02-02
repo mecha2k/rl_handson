@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     env = ToyEnv()
     agent = DullAgent(action=1)
-    exp_source = ptan.experience.ExperienceSource(env=env, agent=agent, steps_count=2)
+    exp_source = ptan.experience.ExperienceSource(env=env, agent=agent, steps_count=5)
     for idx, exp in enumerate(exp_source):
         if idx > 15:
             break
