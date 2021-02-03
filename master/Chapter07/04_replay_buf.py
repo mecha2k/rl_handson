@@ -50,12 +50,12 @@ if __name__ == "__main__":
     exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=1.0, steps_count=1)
     buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=100)
 
-    for step in range(6):
+    for step in range(10):
         buffer.populate(1)
         # if buffer is small enough, do nothing
         if len(buffer) < 5:
             continue
         batch = buffer.sample(4)
-        print("Train time, %d batch samples:" % len(batch))
+        print(f"Train time {step}, {len(batch):d} batch samples")
         for s in batch:
             print(s)
