@@ -62,13 +62,13 @@ if __name__ == "__main__":
 
     env = ToyEnv()
     agent = DullAgent(action=1)
-    exp_source = ptan.experience.ExperienceSource(env=env, agent=agent, steps_count=5)
+    exp_source = ptan.experience.ExperienceSource(env=env, agent=agent, steps_count=2)
     for idx, exp in enumerate(exp_source):
-        if idx > 15:
+        if idx > 10:
             break
-        print(exp)
+        print(f"{idx:2d} :", exp)
 
-    exp_source = ptan.experience.ExperienceSource(env=env, agent=agent, steps_count=4)
+    exp_source = ptan.experience.ExperienceSource(env=env, agent=agent, steps_count=12)
     print(next(iter(exp_source)))
 
     exp_source = ptan.experience.ExperienceSource(
@@ -77,11 +77,11 @@ if __name__ == "__main__":
     for idx, exp in enumerate(exp_source):
         if idx > 4:
             break
-        print(exp)
+        print(f"{idx:2d} :", exp)
 
     print("ExperienceSourceFirstLast")
     exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=1.0, steps_count=1)
     for idx, exp in enumerate(exp_source):
-        print(exp)
-        if idx > 10:
+        if idx > 12:
             break
+        print(f"{idx:2d} :", exp)
